@@ -21,8 +21,12 @@ import {
   ScreenSharePresets,
   Track,
   VideoEncoding,
+  VideoPreset,
   VideoPresets,
 } from "livekit-client";
+
+// Custom 60fps 1080p screen share preset (upstream only ships h1080fps30).
+const screenShareHigh60 = new VideoPreset(1920, 1080, 8_000_000, 60, "medium");
 import { Channel } from "stoat.js";
 
 import { SoundController, useSound } from "@revolt/client";
@@ -448,10 +452,10 @@ class Voice {
     ) {
       qualities.high = {
         name: "high",
-        resolution: ScreenSharePresets.h1080fps30.resolution,
-        fullName: `1080p 30FPS`,
+        resolution: screenShareHigh60.resolution,
+        fullName: `1080p 60FPS`,
         contentHint: "motion",
-        encoding: ScreenSharePresets.h1080fps30.encoding,
+        encoding: screenShareHigh60.encoding,
       };
       const originalResolution = ScreenSharePresets.original.resolution;
       originalResolution.frameRate = 5;
