@@ -1,6 +1,7 @@
 import { Trans } from "@lingui/solid/macro";
 import { useClient } from "@revolt/client";
 import { useModals } from "@revolt/modal";
+import { useVoice } from "@revolt/rtc";
 import { useSmartParams } from "@revolt/routing";
 import { useState } from "@revolt/state";
 import { Slider, Symbol, Text } from "@revolt/ui";
@@ -27,6 +28,7 @@ export function UserContextMenu(props: {
   contextMessage?: Message;
   inVoice?: boolean;
   isScreenshare?: boolean;
+  screenShareTrackId?: string;
 }) {
   // TODO: if we take serverId instead, we could dynamically fetch server member here
   // same for the floating menu I guess?
@@ -34,6 +36,7 @@ export function UserContextMenu(props: {
   const client = useClient();
   const navigate = useNavigate();
   const { openModal, modals } = useModals();
+  const voice = useVoice();
 
   // server context
   const params = useSmartParams();
@@ -385,6 +388,26 @@ export function UserContextMenu(props: {
         >
           <Trans>Mute Screen Share</Trans>
         </ContextMenuButton>
+
+        <Show
+          when={
+            props.screenShareTrackId &&
+            voice.isWatchingScreenShare(props.screenShareTrackId)
+          }
+        >
+          <ContextMenuButton
+            symbol={
+              <IconSlot>
+                <Symbol size={16}>stop_circle</Symbol>
+              </IconSlot>
+            }
+            onClick={() =>
+              voice.stopWatchingScreenShare(props.screenShareTrackId!)
+            }
+          >
+            <Trans>Parar de assistir</Trans>
+          </ContextMenuButton>
+        </Show>
 
         <ContextMenuDivider />
       </Show>

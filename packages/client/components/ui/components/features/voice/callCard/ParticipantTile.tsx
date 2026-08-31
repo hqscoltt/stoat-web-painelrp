@@ -1,4 +1,4 @@
-import { createSignal, onCleanup, Show } from "solid-js";
+import { createSignal, Show } from "solid-js";
 import {
   TrackReference,
   useEnsureParticipant,
@@ -77,16 +77,19 @@ export function ParticipantTile(props: TileProps) {
   // Screen shares from other people don't auto-play; the viewer must click
   // "Watch Stream" first. Saves bandwidth/CPU for people who don't want to
   // watch every share automatically. Own shares always play immediately.
+  //
+  // Keyed by trackSid (not participant identity): this tile remounts when
+  // the user focuses/unfocuses it (layout change), which must NOT reset
+  // the watch state for an ongoing share. A trackSid is unique per publish
+  // session, so a *new* share from the same person naturally starts gated
+  // again without needing any explicit reset-on-unmount logic.
+  const shareTrackId = () => track.publication?.trackSid;
+
   const isPendingWatch = () =>
     isScreenShare() &&
     !participant.isLocal &&
-    !voice.isWatchingScreenShare(participant.identity);
-
-  // Reset the watch gate once this share tile goes away (stream ended),
-  // so a future share from the same person starts gated again.
-  if (isScreenShare()) {
-    onCleanup(() => voice.stopWatchingScreenShare(participant.identity));
-  }
+    !!shareTrackId() &&
+    !voice.isWatchingScreenShare(shareTrackId()!);
 
   const getHeight = () => {
     if (!props.focus || videoDims().height == 0) return {};
@@ -122,6 +125,7 @@ export function ParticipantTile(props: TileProps) {
               member={user().member}
               inVoice={!isScreenShare()}
               isScreenshare={isScreenShare()}
+              screenShareTrackId={isScreenShare() ? shareTrackId() : undefined}
             />
           ),
         }}
@@ -146,7 +150,7 @@ export function ParticipantTile(props: TileProps) {
               <WatchGate
                 onClick={(e) => {
                   e.stopPropagation();
-                  voice.watchScreenShare(participant.identity);
+                  voice.watchScreenShare(shareTrackId()!);
                 }}
               >
                 <Symbol size={40}>play_circle</Symbol>
