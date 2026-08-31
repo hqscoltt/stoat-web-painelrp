@@ -51,28 +51,51 @@ navigator.mediaDevices.getDisplayMedia = async function (opts) {
   // own output) captured natively via the Electron preload bridge, since
   // Chromium's screen-share picker has no way to request a custom audio
   // track directly.
+  console.log(
+    "[DEBUG] loopback check: opts.audio =",
+    !!(opts && opts.audio),
+    "window.desktopAudioLoopback =",
+    typeof window.desktopAudioLoopback,
+  );
+
   if (opts && opts.audio && window.desktopAudioLoopback) {
-    const audioContext = new AudioContext({ sampleRate: 48000 });
-    await audioContext.audioWorklet.addModule("/loopback-processor.js");
+    console.log("[DEBUG] entering desktopAudioLoopback swap block");
 
-    const workletNode = new AudioWorkletNode(
-      audioContext,
-      "loopback-processor",
-      { outputChannelCount: [2] },
-    );
-    const dest = audioContext.createMediaStreamDestination();
-    workletNode.connect(dest);
+    try {
+      const audioContext = new AudioContext({ sampleRate: 48000 });
+      await audioContext.audioWorklet.addModule("/loopback-processor.js");
+      console.log("[DEBUG] audioWorklet module loaded");
 
-    const info = await window.desktopAudioLoopback.start((chunk) => {
-      workletNode.port.postMessage(new Float32Array(chunk), [chunk]);
-    });
+      const workletNode = new AudioWorkletNode(
+        audioContext,
+        "loopback-processor",
+        { outputChannelCount: [2] },
+      );
+      const dest = audioContext.createMediaStreamDestination();
+      workletNode.connect(dest);
 
-    console.debug("Desktop audio loopback acquired:", info);
+      const info = await window.desktopAudioLoopback.start((chunk) => {
+        workletNode.port.postMessage(new Float32Array(chunk), [chunk]);
+      });
 
-    if (info?.ok) {
-      stream.getAudioTracks().forEach((t) => stream.removeTrack(t));
-      stream.addTrack(dest.stream.getAudioTracks()[0]);
+      console.log("[DEBUG] desktopAudioLoopback.start() resolved with:", info);
+
+      if (info?.ok) {
+        stream.getAudioTracks().forEach((t) => stream.removeTrack(t));
+        stream.addTrack(dest.stream.getAudioTracks()[0]);
+        console.log("[DEBUG] swapped in loopback audio track successfully");
+      } else {
+        console.log(
+          "[DEBUG] info.ok was falsy, keeping original Electron loopback audio",
+        );
+      }
+    } catch (e) {
+      console.log("[DEBUG] desktopAudioLoopback swap threw an error:", e);
     }
+  } else {
+    console.log(
+      "[DEBUG] skipped desktopAudioLoopback swap block (condition was false)",
+    );
   }
 
   return stream;
