@@ -7,6 +7,17 @@ import type { Channel, Client, ServerMember, ServerRole, User } from "stoat.js";
 declare global {
   interface Window {
     __TAURI__: object;
+
+    /**
+     * Windows desktop app: per-process loopback audio capture that excludes
+     * the app's own output, exposed by the Electron preload script.
+     */
+    desktopAudioLoopback?: {
+      start: (
+        onChunk: (chunk: ArrayBuffer) => void,
+      ) => Promise<{ ok: boolean; sampleRate?: number; channels?: number }>;
+      stop: () => Promise<void>;
+    };
   }
 }
 

@@ -497,6 +497,7 @@ class Voice {
 
     if (this.screenshare()) {
       await room.localParticipant.setScreenShareEnabled(false);
+      await window.desktopAudioLoopback?.stop();
 
       this.#setScreenshare(room.localParticipant.isScreenShareEnabled);
 
@@ -569,6 +570,8 @@ class Voice {
           // This catches the ending and disables screen sharing on our side. If this weren't here,
           // livekit would still share stream audio after closing the window being streamed.
           localTrack.on("ended", () => {
+            // toggleScreenshare() (see the `if (this.screenshare())` branch
+            // above) already stops the desktop audio loopback capture.
             this.toggleScreenshare();
             const oldAudioTrack = room.localParticipant.getTrackPublication(
               Track.Source.ScreenShareAudio,

@@ -47,5 +47,33 @@ navigator.mediaDevices.getDisplayMedia = async function (opts) {
     }
   }
 
+  // Windows desktop app: swap in per-process loopback audio (excludes our
+  // own output) captured natively via the Electron preload bridge, since
+  // Chromium's screen-share picker has no way to request a custom audio
+  // track directly.
+  if (opts && opts.audio && window.desktopAudioLoopback) {
+    const audioContext = new AudioContext({ sampleRate: 48000 });
+    await audioContext.audioWorklet.addModule("/loopback-processor.js");
+
+    const workletNode = new AudioWorkletNode(
+      audioContext,
+      "loopback-processor",
+      { outputChannelCount: [2] },
+    );
+    const dest = audioContext.createMediaStreamDestination();
+    workletNode.connect(dest);
+
+    const info = await window.desktopAudioLoopback.start((chunk) => {
+      workletNode.port.postMessage(new Float32Array(chunk), [chunk]);
+    });
+
+    console.debug("Desktop audio loopback acquired:", info);
+
+    if (info?.ok) {
+      stream.getAudioTracks().forEach((t) => stream.removeTrack(t));
+      stream.addTrack(dest.stream.getAudioTracks()[0]);
+    }
+  }
+
   return stream;
 };
