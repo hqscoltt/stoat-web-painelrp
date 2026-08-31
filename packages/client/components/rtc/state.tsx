@@ -540,7 +540,13 @@ class Voice {
               restrictOwnAudio: true,
             },
           },
-          { screenShareEncoding: chosenQuality?.encoding },
+          {
+            screenShareEncoding: chosenQuality?.encoding,
+            // H.264 is hardware-accelerated on virtually all modern GPUs;
+            // the default (VP8) has no HW encoder support and falls back
+            // to CPU-only software encoding, spiking CPU usage.
+            videoCodec: "h264",
+          },
         );
 
         const screenAudioTrack = room.localParticipant.getTrackPublication(
