@@ -80,7 +80,7 @@ export default function FlowLogin() {
                 </a>
               </Column>
               <Column gap="sm" align>
-                <a href="https://github.com/hqscoltt/revolt-desktop-painelrp/releases/download/v1.0.0/ChatPainelRP-Setup-1.0.0.exe">
+                <a href="https://github.com/hqscoltt/revolt-desktop-painelrp/releases/download/v1.0.0/Revolt-Setup-1.0.0.exe">
                   <Button variant="outlined">
                     <Trans>Baixar para Desktop (Windows)</Trans>
                   </Button>
