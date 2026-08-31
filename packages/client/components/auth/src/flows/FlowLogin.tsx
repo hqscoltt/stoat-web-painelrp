@@ -87,6 +87,12 @@ export default function FlowLogin() {
                 </a>
                 <small>
                   <Trans>
+                    Cliente desktop não-oficial mantido pela comunidade, não
+                    afiliado à Stoat. Use por sua conta e risco.
+                  </Trans>
+                </small>
+                <small>
+                  <Trans>
                     O Windows pode avisar que o app não é reconhecido —
                     clique em "Mais informações" → "Executar assim mesmo".
                   </Trans>
