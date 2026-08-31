@@ -324,6 +324,11 @@ const Overlay = styled("div", {
     alignItems: "end",
     flexDirection: "row",
 
+    // Purely decorative (username/status icons) — must not block clicks
+    // meant for whatever shares this grid cell, e.g. the "Watch Stream"
+    // gate button, which sits underneath in the same grid-area.
+    pointerEvents: "none",
+
     transition: "var(--transitions-fast) all",
     transitionTimingFunction: "ease",
   },
