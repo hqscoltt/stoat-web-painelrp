@@ -151,6 +151,9 @@ export function ParticipantTile(props: TileProps) {
                 onClick={(e) => {
                   e.stopPropagation();
                   voice.watchScreenShare(shareTrackId()!);
+                  // Always start unmuted, regardless of any stale
+                  // per-participant mute preference from a previous watch.
+                  state.voice.setScreenShareMuted(participant.identity, false);
                 }}
               >
                 <Symbol size={40}>play_circle</Symbol>
