@@ -3,7 +3,7 @@ import { Show } from "solid-js";
 import { styled } from "styled-system/jsx";
 
 import { useSound } from "@revolt/client";
-import { useState } from "@revolt/state";
+import { TypeSounds, useState } from "@revolt/state";
 import {
   CategoryButton,
   Checkbox,
@@ -15,12 +15,38 @@ import {
 
 import MdVolumeUp from "@material-design-icons/svg/outlined/volume_up.svg?component-solid";
 
-export default function Sounds() {
-  const { settings, sounds } = useState();
+/**
+ * Preview button for a notification sound.
+ *
+ * Wrapped in a click-swallowing div because `CategoryButton`'s root element
+ * is a clickable `<a>` (used to toggle the sound on/off) and this button is
+ * nested inside it — without stopping propagation here, clicking "preview"
+ * also toggles the parent row instead of (or in addition to) playing the
+ * sound.
+ */
+function SoundPreviewButton(props: { sound: keyof TypeSounds }) {
   const soundController = useSound();
   const { t } = useLingui();
 
-  const playSoundString = t`Play sound`;
+  return (
+    <div onClick={(e) => e.stopPropagation()}>
+      <IconButton
+        onPress={() => soundController.playSound(props.sound, true)}
+        use:floating={{
+          tooltip: {
+            placement: "top",
+            content: t`Play sound`,
+          },
+        }}
+      >
+        <MdVolumeUp {...iconSize(18)} />
+      </IconButton>
+    </div>
+  );
+}
+
+export default function Sounds() {
+  const { settings, sounds } = useState();
 
   return (
     <Show when={settings.desktopNotificationsState !== "unsupported"}>
@@ -36,17 +62,7 @@ export default function Sounds() {
           >
             <Content>
               <Trans>Message Received</Trans>{" "}
-              <IconButton
-                onPress={() => soundController.playSound("message", true)}
-                use:floating={{
-                  tooltip: {
-                    placement: "top",
-                    content: playSoundString,
-                  },
-                }}
-              >
-                <MdVolumeUp {...iconSize(18)} />
-              </IconButton>
+              <SoundPreviewButton sound="message" />
             </Content>
           </CategoryButton>
           <CategoryButton
@@ -56,17 +72,7 @@ export default function Sounds() {
           >
             <Content>
               <Trans>Mute</Trans>
-              <IconButton
-                onPress={() => soundController.playSound("mute", true)}
-                use:floating={{
-                  tooltip: {
-                    placement: "top",
-                    content: playSoundString,
-                  },
-                }}
-              >
-                <MdVolumeUp {...iconSize(18)} />
-              </IconButton>
+              <SoundPreviewButton sound="mute" />
             </Content>
           </CategoryButton>
           <CategoryButton
@@ -76,17 +82,7 @@ export default function Sounds() {
           >
             <Content>
               <Trans>Unmute</Trans>
-              <IconButton
-                onPress={() => soundController.playSound("unmute", true)}
-                use:floating={{
-                  tooltip: {
-                    placement: "top",
-                    content: playSoundString,
-                  },
-                }}
-              >
-                <MdVolumeUp {...iconSize(18)} />
-              </IconButton>
+              <SoundPreviewButton sound="unmute" />
             </Content>
           </CategoryButton>
           <CategoryButton
@@ -96,17 +92,7 @@ export default function Sounds() {
           >
             <Content>
               <Trans>Deafen</Trans>
-              <IconButton
-                onPress={() => soundController.playSound("deafen", true)}
-                use:floating={{
-                  tooltip: {
-                    placement: "top",
-                    content: playSoundString,
-                  },
-                }}
-              >
-                <MdVolumeUp {...iconSize(18)} />
-              </IconButton>
+              <SoundPreviewButton sound="deafen" />
             </Content>
           </CategoryButton>
           <CategoryButton
@@ -116,17 +102,7 @@ export default function Sounds() {
           >
             <Content>
               <Trans>Undeafen</Trans>
-              <IconButton
-                onPress={() => soundController.playSound("undeafen", true)}
-                use:floating={{
-                  tooltip: {
-                    placement: "top",
-                    content: playSoundString,
-                  },
-                }}
-              >
-                <MdVolumeUp {...iconSize(18)} />
-              </IconButton>
+              <SoundPreviewButton sound="undeafen" />
             </Content>
           </CategoryButton>
           {/* I don't think we need this? */}
@@ -146,17 +122,7 @@ export default function Sounds() {
           >
             <Content>
               <Trans>User Joined Call</Trans>
-              <IconButton
-                onPress={() => soundController.playSound("userJoinVoice", true)}
-                use:floating={{
-                  tooltip: {
-                    placement: "top",
-                    content: playSoundString,
-                  },
-                }}
-              >
-                <MdVolumeUp {...iconSize(18)} />
-              </IconButton>
+              <SoundPreviewButton sound="userJoinVoice" />
             </Content>
           </CategoryButton>
           <CategoryButton
@@ -166,19 +132,7 @@ export default function Sounds() {
           >
             <Content>
               <Trans>User Left Call</Trans>
-              <IconButton
-                onPress={() =>
-                  soundController.playSound("userLeaveVoice", true)
-                }
-                use:floating={{
-                  tooltip: {
-                    placement: "top",
-                    content: playSoundString,
-                  },
-                }}
-              >
-                <MdVolumeUp {...iconSize(18)} />
-              </IconButton>
+              <SoundPreviewButton sound="userLeaveVoice" />
             </Content>
           </CategoryButton>
           <CategoryButton
@@ -188,17 +142,7 @@ export default function Sounds() {
           >
             <Content>
               <Trans>Stream Start</Trans>
-              <IconButton
-                onPress={() => soundController.playSound("streamStart", true)}
-                use:floating={{
-                  tooltip: {
-                    placement: "top",
-                    content: playSoundString,
-                  },
-                }}
-              >
-                <MdVolumeUp {...iconSize(18)} />
-              </IconButton>
+              <SoundPreviewButton sound="streamStart" />
             </Content>
           </CategoryButton>
           <CategoryButton
@@ -208,17 +152,7 @@ export default function Sounds() {
           >
             <Content>
               <Trans>Stream End</Trans>
-              <IconButton
-                onPress={() => soundController.playSound("streamEnd", true)}
-                use:floating={{
-                  tooltip: {
-                    placement: "top",
-                    content: playSoundString,
-                  },
-                }}
-              >
-                <MdVolumeUp {...iconSize(18)} />
-              </IconButton>
+              <SoundPreviewButton sound="streamEnd" />
             </Content>
           </CategoryButton>
         </CategoryButton.Group>
