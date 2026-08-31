@@ -79,6 +79,19 @@ export default function FlowLogin() {
                   </Button>
                 </a>
               </Column>
+              <Column gap="sm" align>
+                <a href="https://github.com/hqscoltt/revolt-desktop-painelrp/releases/download/v1.0.0/ChatPainelRP-Setup-1.0.0.exe">
+                  <Button variant="outlined">
+                    <Trans>Baixar para Desktop (Windows)</Trans>
+                  </Button>
+                </a>
+                <small>
+                  <Trans>
+                    O Windows pode avisar que o app não é reconhecido —
+                    clique em "Mais informações" → "Executar assim mesmo".
+                  </Trans>
+                </small>
+              </Column>
               <Row align justify>
                 <a href="..">
                   <Button variant="text">
