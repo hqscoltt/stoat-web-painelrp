@@ -94,6 +94,9 @@ class Voice {
   showBar: Accessor<boolean>;
   #setShowBar: Setter<boolean>;
 
+  watchingScreenShares: Accessor<Set<string>>;
+  #setWatchingScreenShares: Setter<Set<string>>;
+
   private sound: SoundController;
   private device: Device;
 
@@ -149,6 +152,12 @@ class Voice {
     const [showBar, setShowBar] = createSignal(true);
     this.showBar = showBar;
     this.#setShowBar = setShowBar;
+
+    const [watchingScreenShares, setWatchingScreenShares] = createSignal<
+      Set<string>
+    >(new Set());
+    this.watchingScreenShares = watchingScreenShares;
+    this.#setWatchingScreenShares = setWatchingScreenShares;
 
     const inst = useInstance();
     this.config = inst.config;
@@ -675,6 +684,44 @@ class Voice {
 
   toggleShowBar() {
     this.#setShowBar((s) => !s);
+  }
+
+  /**
+   * Mark a participant's screen share as being actively watched.
+   * Used to gate video/audio subscription behind a "Watch Stream" click,
+   * saving bandwidth/CPU for viewers who don't opt in.
+   *
+   * @param participantId The identity of the participant sharing their screen
+   */
+  watchScreenShare(participantId: string) {
+    this.#setWatchingScreenShares((prev) => {
+      const next = new Set(prev);
+      next.add(participantId);
+      return next;
+    });
+  }
+
+  /**
+   * Stop watching a participant's screen share (e.g. when they stop sharing).
+   *
+   * @param participantId The identity of the participant sharing their screen
+   */
+  stopWatchingScreenShare(participantId: string) {
+    this.#setWatchingScreenShares((prev) => {
+      if (!prev.has(participantId)) return prev;
+      const next = new Set(prev);
+      next.delete(participantId);
+      return next;
+    });
+  }
+
+  /**
+   * Whether the local user has clicked to watch a given participant's stream.
+   *
+   * @param participantId The identity of the participant sharing their screen
+   */
+  isWatchingScreenShare(participantId: string): boolean {
+    return this.watchingScreenShares().has(participantId);
   }
 
   getConnectedUser(userId: string) {

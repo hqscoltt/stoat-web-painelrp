@@ -29,7 +29,13 @@ export function RoomAudioManager() {
     tracks().filter(
       (track) =>
         !isLocal(track.participant) &&
-        track.publication.kind === Track.Kind.Audio,
+        track.publication.kind === Track.Kind.Audio &&
+        // Screen share audio stays unsubscribed until the viewer clicks
+        // "Watch Stream" on that participant's tile, matching the video
+        // gate in ParticipantTile — no auto-playing audio for shares
+        // nobody asked to watch.
+        (track.source !== Track.Source.ScreenShareAudio ||
+          voice.isWatchingScreenShare(track.participant.identity)),
     ),
   );
 

@@ -1,4 +1,4 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, onCleanup, Show } from "solid-js";
 import {
   TrackReference,
   useEnsureParticipant,
@@ -8,6 +8,7 @@ import {
   VideoTrack,
 } from "solid-livekit-components";
 
+import { Trans } from "@lingui/solid/macro";
 import { Track } from "livekit-client";
 import { cva } from "styled-system/css";
 import { styled } from "styled-system/jsx";
@@ -73,6 +74,20 @@ export function ParticipantTile(props: TileProps) {
   const isScreenShare = () => track.source === Track.Source.ScreenShare;
   const isSpeaking = useIsSpeaking(participant);
 
+  // Screen shares from other people don't auto-play; the viewer must click
+  // "Watch Stream" first. Saves bandwidth/CPU for people who don't want to
+  // watch every share automatically. Own shares always play immediately.
+  const isPendingWatch = () =>
+    isScreenShare() &&
+    !participant.isLocal &&
+    !voice.isWatchingScreenShare(participant.identity);
+
+  // Reset the watch gate once this share tile goes away (stream ended),
+  // so a future share from the same person starts gated again.
+  if (isScreenShare()) {
+    onCleanup(() => voice.stopWatchingScreenShare(participant.identity));
+  }
+
   const getHeight = () => {
     if (!props.focus || videoDims().height == 0) return {};
     // Calculate the aspect ratio
@@ -125,24 +140,41 @@ export function ParticipantTile(props: TileProps) {
             </AvatarOnly>
           }
         >
-          <VideoTrack
-            style={{
-              "grid-area": "1/1",
-              "object-fit": "contain",
-              width: "100%",
-              height: "100%",
-              overflow: "hidden",
-            }}
-            trackRef={track as TrackReference}
-            manageSubscription={true}
-            ref={videoRef}
-            on:resize={() => {
-              setVideoDims({
-                height: videoRef?.videoHeight || 0,
-                width: videoRef?.videoWidth || 0,
-              });
-            }}
-          />
+          <Show
+            when={!isPendingWatch()}
+            fallback={
+              <WatchGate
+                onClick={(e) => {
+                  e.stopPropagation();
+                  voice.watchScreenShare(participant.identity);
+                }}
+              >
+                <Symbol size={40}>play_circle</Symbol>
+                <span>
+                  <Trans>Assistir Transmissão</Trans>
+                </span>
+              </WatchGate>
+            }
+          >
+            <VideoTrack
+              style={{
+                "grid-area": "1/1",
+                "object-fit": "contain",
+                width: "100%",
+                height: "100%",
+                overflow: "hidden",
+              }}
+              trackRef={track as TrackReference}
+              manageSubscription={true}
+              ref={videoRef}
+              on:resize={() => {
+                setVideoDims({
+                  height: videoRef?.videoHeight || 0,
+                  width: videoRef?.videoWidth || 0,
+                });
+              }}
+            />
+          </Show>
         </Show>
         <Overlay showOnHover={isScreenShare()}>
           <OverlayInner>
@@ -247,6 +279,35 @@ const AvatarOnly = styled("div", {
       width: "auto !important",
       height: "30% !important",
       minHeight: "48px",
+    },
+  },
+});
+
+const WatchGate = styled("div", {
+  base: {
+    gridArea: "1/1",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "var(--gap-sm)",
+
+    width: "100%",
+    height: "100%",
+
+    cursor: "pointer",
+    userSelect: "none",
+
+    color: "var(--md-sys-color-on-surface)",
+    background: "var(--md-sys-color-surface-container-highest)",
+
+    fontWeight: 500,
+    fontSize: "14px",
+
+    transition: "var(--transitions-fast) background-color",
+
+    "&:hover": {
+      background: "var(--md-sys-color-surface-container-high)",
     },
   },
 });
