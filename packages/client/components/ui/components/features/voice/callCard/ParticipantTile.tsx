@@ -78,18 +78,16 @@ export function ParticipantTile(props: TileProps) {
   // "Watch Stream" first. Saves bandwidth/CPU for people who don't want to
   // watch every share automatically. Own shares always play immediately.
   //
-  // Keyed by trackSid (not participant identity): this tile remounts when
-  // the user focuses/unfocuses it (layout change), which must NOT reset
-  // the watch state for an ongoing share. A trackSid is unique per publish
-  // session, so a *new* share from the same person naturally starts gated
-  // again without needing any explicit reset-on-unmount logic.
-  const shareTrackId = () => track.publication?.trackSid;
-
+  // Keyed by participant identity: RoomAudioManager (which gates the
+  // *audio* track) has to key by identity too, since the screen's video
+  // and audio are separate publications with different trackSids — there
+  // is no single trackSid that both sides can agree on. This tile can
+  // remount on focus/unfocus, but as long as nothing resets the watch
+  // state on unmount, identity-keying survives that fine.
   const isPendingWatch = () =>
     isScreenShare() &&
     !participant.isLocal &&
-    !!shareTrackId() &&
-    !voice.isWatchingScreenShare(shareTrackId()!);
+    !voice.isWatchingScreenShare(participant.identity);
 
   const getHeight = () => {
     if (!props.focus || videoDims().height == 0) return {};
@@ -125,7 +123,9 @@ export function ParticipantTile(props: TileProps) {
               member={user().member}
               inVoice={!isScreenShare()}
               isScreenshare={isScreenShare()}
-              screenShareTrackId={isScreenShare() ? shareTrackId() : undefined}
+              screenShareTrackId={
+                isScreenShare() ? participant.identity : undefined
+              }
             />
           ),
         }}
@@ -150,7 +150,7 @@ export function ParticipantTile(props: TileProps) {
               <WatchGate
                 onClick={(e) => {
                   e.stopPropagation();
-                  voice.watchScreenShare(shareTrackId()!);
+                  voice.watchScreenShare(participant.identity);
                   // Always start unmuted, regardless of any stale
                   // per-participant mute preference from a previous watch.
                   state.voice.setScreenShareMuted(participant.identity, false);
