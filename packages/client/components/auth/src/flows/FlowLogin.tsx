@@ -79,22 +79,16 @@ export default function FlowLogin() {
                   </Button>
                 </a>
               </Column>
-              <Column gap="sm" align>
+              <Column gap="none" align>
                 <a href="https://github.com/hqscoltt/revolt-desktop-painelrp/releases/download/v1.0.0/Revolt-Setup-1.0.0.exe">
-                  <Button variant="outlined">
+                  <Button variant="text">
                     <Trans>Baixar para Desktop (Windows)</Trans>
                   </Button>
                 </a>
                 <small>
                   <Trans>
-                    Cliente desktop não-oficial mantido pela comunidade, não
-                    afiliado à Stoat. Use por sua conta e risco.
-                  </Trans>
-                </small>
-                <small>
-                  <Trans>
-                    O Windows pode avisar que o app não é reconhecido —
-                    clique em "Mais informações" → "Executar assim mesmo".
+                    Cliente não-oficial da comunidade — o Windows pode avisar
+                    "app não reconhecido", clique em "Executar assim mesmo".
                   </Trans>
                 </small>
               </Column>
