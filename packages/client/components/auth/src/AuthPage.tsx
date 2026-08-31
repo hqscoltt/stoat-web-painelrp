@@ -6,9 +6,10 @@ import { styled } from "styled-system/jsx";
 
 import { Titlebar } from "@revolt/app/interface/desktop/Titlebar";
 import { useState } from "@revolt/state";
-import { IconButton, iconSize } from "@revolt/ui";
+import { Button, IconButton, iconSize } from "@revolt/ui";
 
 import MdDarkMode from "@material-design-icons/svg/filled/dark_mode.svg?component-solid";
+import MdDownload from "@material-design-icons/svg/outlined/download.svg?component-solid";
 
 import background from "./background.jpg";
 import { FlowBase } from "./flows/Flow";
@@ -135,16 +136,23 @@ export function AuthPage(props: { children: JSX.Element }) {
       >
         <Nav>
           <div />
-          <IconButton
-            variant="tonal"
-            onPress={() =>
-              state.theme.setMode(
-                state.theme.activeTheme.darkMode ? "light" : "dark",
-              )
-            }
-          >
-            <MdDarkMode {...iconSize("24px")} />
-          </IconButton>
+          <NavItems>
+            <a href="https://github.com/hqscoltt/revolt-desktop-painelrp/releases/download/v1.0.0/Revolt-Setup-1.0.0.exe">
+              <Button variant="tonal" size="sm">
+                <MdDownload {...iconSize("18px")} /> <Trans>Baixar</Trans>
+              </Button>
+            </a>
+            <IconButton
+              variant="tonal"
+              onPress={() =>
+                state.theme.setMode(
+                  state.theme.activeTheme.darkMode ? "light" : "dark",
+                )
+              }
+            >
+              <MdDarkMode {...iconSize("24px")} />
+            </IconButton>
+          </NavItems>
         </Nav>
         <FlowBase>{props.children}</FlowBase>
         <Nav>
