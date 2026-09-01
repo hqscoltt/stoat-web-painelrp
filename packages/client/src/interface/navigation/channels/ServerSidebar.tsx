@@ -605,6 +605,21 @@ function Entry(
         }
         actions={
           <Show when={!isMobile}>
+            <Show when={props.channel.isVoice && inCall()}>
+              <a
+                use:floating={{
+                  tooltip: { placement: "top", content: "Abrir chat" },
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  voice.toggleChat();
+                }}
+              >
+                <Symbol size={16} fill>
+                  chat
+                </Symbol>
+              </a>
+            </Show>
             <Show when={canInvite()}>
               <a
                 use:floating={{

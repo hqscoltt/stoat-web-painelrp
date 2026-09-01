@@ -88,9 +88,7 @@ export function AccountBar() {
                   <ConnectedLabel style={{ color: pingColor() }}>
                     <Trans>Voz conectada</Trans>
                   </ConnectedLabel>
-                  <Text class="label" size="small">
-                    {voice.channel()?.name}
-                  </Text>
+                  <ChannelNameText>{voice.channel()?.name}</ChannelNameText>
                 </ConnectedText>
               </ConnectedInfo>
               <IconButton
@@ -216,6 +214,10 @@ const ICON_ANIM_KEYFRAMES = `
   from { transform: rotate(0deg); }
   to { transform: rotate(90deg); }
 }
+@keyframes account-bar-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(2px); }
+}
 `;
 
 /**
@@ -235,7 +237,9 @@ function Ping(props: { rtt: number | undefined; color: string }) {
         },
       }}
     >
-      <Symbol color={props.color}>wifi</Symbol>
+      <IconAnim kind="pop">
+        <Symbol color={props.color}>wifi</Symbol>
+      </IconAnim>
     </div>
   );
 }
@@ -342,7 +346,9 @@ function DeviceChevron(props: { kind: "audioinput" | "audiooutput" }) {
         ),
       }}
     >
-      <Symbol size={14}>keyboard_arrow_down</Symbol>
+      <IconAnim kind="bounce">
+        <Symbol size={14}>keyboard_arrow_down</Symbol>
+      </IconAnim>
     </IconButton>
   );
 }
@@ -398,6 +404,19 @@ const ConnectedLabel = styled("span", {
   },
 });
 
+const ChannelNameText = styled("span", {
+  base: {
+    // Was using the app's muted "label" colour, which read as too dark
+    // against this row's background — lighten it explicitly.
+    color: "rgba(255, 255, 255, 0.75)",
+    fontSize: "0.8em",
+
+    overflow: "hidden",
+    whiteSpace: "nowrap",
+    textOverflow: "ellipsis",
+  },
+});
+
 /**
  * Wraps an icon to give it a small, tasteful hover animation — matching
  * Discord's mic-wiggle/hangup-jump/etc. micro-interactions.
@@ -420,6 +439,9 @@ const IconAnim = styled("span", {
       spin: {
         "&:hover": { animation: "account-bar-spin 0.3s ease" },
       },
+      bounce: {
+        "&:hover": { animation: "account-bar-bounce 0.3s ease" },
+      },
     },
   },
 });
@@ -429,7 +451,9 @@ const Row = styled("div", {
     display: "flex",
     alignItems: "center",
     gap: "var(--gap-sm)",
-    padding: "var(--gap-sm) var(--gap-md)",
+    // A bit taller than before — the name/status text was cramped.
+    padding: "var(--gap-md)",
+    minHeight: "56px",
   },
 });
 

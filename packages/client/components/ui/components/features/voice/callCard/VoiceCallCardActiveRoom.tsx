@@ -98,27 +98,6 @@ function LayoutButtons() {
         >
           <Symbol>unfold_less</Symbol>
         </IconButton>
-        <IconButton
-          size="sm"
-          variant="standard"
-          onPress={() => voice.toggleLayout("expanded")}
-          use:floating={{
-            tooltip: {
-              placement: "top",
-              content:
-                voice.layout() === "expanded"
-                  ? t`Restore call window`
-                  : t`Maximize call window`,
-            },
-          }}
-        >
-          <Show
-            when={voice.layout() === "expanded"}
-            fallback={<Symbol>open_in_full</Symbol>}
-          >
-            <Symbol>close_fullscreen</Symbol>
-          </Show>
-        </IconButton>
       </Show>
       <IconButton
         size="sm"

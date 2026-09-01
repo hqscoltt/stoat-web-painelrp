@@ -114,7 +114,10 @@ export function VoiceCallCardContext(props: { children: JSX.Element }) {
       sty.height = "";
       setMode();
     } else if (
-      voice.layout() === "expanded" &&
+      // Always full-size for the not-yet-connected join preview (there's
+      // no smaller "inline" mode for it any more), or when the user has
+      // explicitly maximized an active call.
+      (voice.layout() === "expanded" || !inCall()) &&
       inf?.parentRect &&
       (!inf.drawer || inf.drawer === SlideState.SHOWN)
     ) {

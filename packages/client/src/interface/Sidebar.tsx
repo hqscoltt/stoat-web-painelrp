@@ -1,4 +1,12 @@
-import { Component, JSX, Match, Show, Switch, createMemo } from "solid-js";
+import {
+  Component,
+  createSignal,
+  JSX,
+  Match,
+  Show,
+  Switch,
+  createMemo,
+} from "solid-js";
 import { styled } from "styled-system/jsx";
 
 import { Channel, Server as ServerI } from "stoat.js";
@@ -48,8 +56,17 @@ export const Sidebar = (props: {
   const params = useParams<{ server: string }>();
   const location = useLocation();
 
+  // Resizable channel-list column width, Discord-style drag handle at its
+  // right edge. Local to this session (not persisted) for now.
+  const [channelSidebarWidth, setChannelSidebarWidth] = createSignal(240);
+  const MIN_WIDTH = 200,
+    MAX_WIDTH = 420;
+
   return (
-    <MainBar class="main_bar">
+    <MainBar
+      class="main_bar"
+      style={{ "--layout-width-channel-sidebar": `${channelSidebarWidth()}px` }}
+    >
       <ServerList
         orderedServers={state.ordering.orderedServers(client())}
         setServerOrder={state.ordering.setServerOrder}
@@ -80,11 +97,45 @@ export const Sidebar = (props: {
             <Server />
           </Match>
         </Switch>
+        <SidebarResizeHandle
+          onPointerDown={(e) => {
+            e.preventDefault();
+            const startX = e.clientX;
+            const startWidth = channelSidebarWidth();
+
+            const onMove = (ev: PointerEvent) => {
+              const next = startWidth + (ev.clientX - startX);
+              setChannelSidebarWidth(
+                Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Math.round(next))),
+              );
+            };
+            const onUp = () => {
+              document.removeEventListener("pointermove", onMove);
+              document.removeEventListener("pointerup", onUp);
+            };
+            document.addEventListener("pointermove", onMove);
+            document.addEventListener("pointerup", onUp);
+          }}
+        />
       </Show>
       <AccountBar />
     </MainBar>
   );
 };
+
+const SidebarResizeHandle = styled("div", {
+  base: {
+    flexShrink: 0,
+    width: "4px",
+    cursor: "col-resize",
+    touchAction: "none",
+
+    "&:hover": {
+      background: "var(--md-sys-color-primary)",
+      opacity: 0.5,
+    },
+  },
+});
 
 /**
  * Render sidebar for home

@@ -52,12 +52,12 @@ export function VoiceCallCardPreview(props: { channel: Channel }) {
       <Center>
         <Show
           when={users().length}
-          fallback={<Symbol size={44}>voice_chat</Symbol>}
+          fallback={<Symbol size={32}>voice_chat</Symbol>}
         >
           <Avatars>
             <For each={users()}>
               {(user) => (
-                <Avatar size={44} src={user?.avatar} fallback={user?.username} />
+                <Avatar size={32} src={user?.avatar} fallback={user?.username} />
               )}
             </For>
           </Avatars>
