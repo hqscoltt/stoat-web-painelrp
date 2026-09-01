@@ -113,6 +113,15 @@ class Voice {
   chatWidth: Accessor<number>;
   #setChatWidth: Setter<number>;
 
+  /**
+   * Whether a layout sidebar (channel list or in-call chat) is actively
+   * being dragged to resize. While true, the floating call card suppresses
+   * its own transition so it tracks the drag instead of visibly lagging
+   * behind it.
+   */
+  isLayoutResizing: Accessor<boolean>;
+  #setIsLayoutResizing: Setter<boolean>;
+
   private sound: SoundController;
   private device: Device;
 
@@ -182,6 +191,10 @@ class Voice {
     const [chatWidth, setChatWidth] = createSignal(360);
     this.chatWidth = chatWidth;
     this.#setChatWidth = setChatWidth;
+
+    const [isLayoutResizing, setIsLayoutResizing] = createSignal(false);
+    this.isLayoutResizing = isLayoutResizing;
+    this.#setIsLayoutResizing = setIsLayoutResizing;
 
     const inst = useInstance();
     this.config = inst.config;
@@ -796,6 +809,10 @@ class Voice {
         Math.max(VOICE_CHAT_MIN_WIDTH, Math.round(px)),
       ),
     );
+  }
+
+  setIsLayoutResizing(value: boolean) {
+    this.#setIsLayoutResizing(value);
   }
 
   getConnectedUser(userId: string) {

@@ -422,8 +422,6 @@ const CategorySection = styled("div", {
     gap: "var(--gap-md)",
     flexDirection: "column",
     paddingBlock: "var(--gap-sm)",
-    borderRadius: "var(--borderRadius-sm)",
-    background: "var(--md-sys-color-surface-container-low)",
   },
 });
 

@@ -18,6 +18,7 @@ import {
 } from "@revolt/app";
 import { useClient, useUser } from "@revolt/client";
 import { useModals } from "@revolt/modal";
+import { useVoice } from "@revolt/rtc";
 import { useLocation, useParams, useSmartParams } from "@revolt/routing";
 import { useState } from "@revolt/state";
 import { LAYOUT_SECTIONS } from "@revolt/state/stores/Layout";
@@ -51,6 +52,7 @@ export const Sidebar = (props: {
   const user = useUser();
   const state = useState();
   const client = useClient();
+  const voice = useVoice();
   const { openModal } = useModals();
 
   const params = useParams<{ server: string }>();
@@ -58,7 +60,7 @@ export const Sidebar = (props: {
 
   // Resizable channel-list column width, Discord-style drag handle at its
   // right edge. Local to this session (not persisted) for now.
-  const [channelSidebarWidth, setChannelSidebarWidth] = createSignal(240);
+  const [channelSidebarWidth, setChannelSidebarWidth] = createSignal(280);
   const MIN_WIDTH = 200,
     MAX_WIDTH = 420;
 
@@ -102,6 +104,7 @@ export const Sidebar = (props: {
             e.preventDefault();
             const startX = e.clientX;
             const startWidth = channelSidebarWidth();
+            voice.setIsLayoutResizing(true);
 
             const onMove = (ev: PointerEvent) => {
               const next = startWidth + (ev.clientX - startX);
@@ -110,6 +113,7 @@ export const Sidebar = (props: {
               );
             };
             const onUp = () => {
+              voice.setIsLayoutResizing(false);
               document.removeEventListener("pointermove", onMove);
               document.removeEventListener("pointerup", onUp);
             };
@@ -129,11 +133,10 @@ const SidebarResizeHandle = styled("div", {
     width: "4px",
     cursor: "col-resize",
     touchAction: "none",
-
-    "&:hover": {
-      background: "var(--md-sys-color-primary)",
-      opacity: 0.5,
-    },
+    // Blend into the same background as the sidebar/content either side of
+    // it, rather than leaving a seam showing whatever colour sits behind
+    // MainBar (which has no background of its own).
+    background: "var(--md-sys-color-surface-container-lowest)",
   },
 });
 

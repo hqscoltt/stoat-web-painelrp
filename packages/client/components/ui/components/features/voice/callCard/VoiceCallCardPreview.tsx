@@ -1,6 +1,5 @@
 import { For, Show } from "solid-js";
 
-import { Trans, useLingui } from "@lingui/solid/macro";
 import { Channel } from "stoat.js";
 import { styled } from "styled-system/jsx";
 
@@ -23,7 +22,6 @@ import { css } from "styled-system/css";
  */
 export function VoiceCallCardPreview(props: { channel: Channel }) {
   const voice = useVoice();
-  const { t } = useLingui();
 
   const ids = () => [...props.channel.voiceParticipants.keys()];
   const users = useUsers(ids);
@@ -64,28 +62,23 @@ export function VoiceCallCardPreview(props: { channel: Channel }) {
         </Show>
 
         <Text class="title" size="large">
-          <Show
-            when={voice.state() === "READY"}
-            fallback={<Trans>Switch to this voice channel</Trans>}
-          >
-            <Trans>Join the voice channel</Trans>
-          </Show>
+          {props.channel.name}
         </Text>
 
         <p class={css(typography.raw({ class: "body" }), Subtext)}>
           <Show
             when={users().length}
-            fallback={<Trans>Be the first to join</Trans>}
+            fallback="Seja o primeiro a entrar"
           >
-            {t`with ${users()
+            {`com ${users()
               .map((u) => u?.username)
               .filter(Boolean)
               .join(", ")}`}
           </Show>
         </p>
 
-        <Button variant="filled" size="md">
-          <Symbol>call</Symbol> <Trans>Join Voice Channel</Trans>
+        <Button variant="filled" size="md" onPress={() => voice.connect(props.channel)}>
+          <Symbol>call</Symbol> Entrar no canal de voz
         </Button>
       </Center>
     </Preview>

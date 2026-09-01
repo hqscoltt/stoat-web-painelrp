@@ -107,6 +107,12 @@ export function VoiceCallCardContext(props: { children: JSX.Element }) {
     const sty = ref.style;
     resetEvents();
 
+    // While a layout sidebar is actively being dragged, the call card would
+    // otherwise chase the constantly-updating target through its normal
+    // .3s transition, visibly lagging behind the cursor. Track the drag
+    // instantly instead, and let the transition resume once it ends.
+    sty.transition = voice.isLayoutResizing() ? "none" : "";
+
     //Set mode based on state
     if (voice.layout() === "fullscreen") {
       sty.transform = ``;
@@ -349,6 +355,7 @@ const Base = styled("div", {
 const Card = styled("div", {
   base: {
     pointerEvents: "all",
+    overflow: "hidden",
 
     maxWidth: "100%",
     transition: "var(--transitions-fast) all",

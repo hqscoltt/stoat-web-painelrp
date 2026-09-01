@@ -281,6 +281,7 @@ export function TextChannel(props: ChannelPageProps) {
                   e.preventDefault();
                   const startX = e.clientX;
                   const startWidth = voice.chatWidth();
+                  voice.setIsLayoutResizing(true);
 
                   const onMove = (ev: PointerEvent) => {
                     // Dragging the handle LEFT increases width (the panel
@@ -288,6 +289,7 @@ export function TextChannel(props: ChannelPageProps) {
                     voice.setChatWidth(startWidth + (startX - ev.clientX));
                   };
                   const onUp = () => {
+                    voice.setIsLayoutResizing(false);
                     document.removeEventListener("pointermove", onMove);
                     document.removeEventListener("pointerup", onUp);
                   };
