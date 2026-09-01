@@ -99,6 +99,19 @@ export function ParticipantTile(props: TileProps) {
       : { height: "100%" };
   };
 
+  // Deterministic dark background per participant so tiles are visually
+  // distinct without ever going bright — same identity always maps to the
+  // same hue, different identities (almost always) land on different hues.
+  const tileBackground = () => {
+    let hash = 0;
+    const id = participant.identity;
+    for (let i = 0; i < id.length; i++) {
+      hash = (hash * 31 + id.charCodeAt(i)) | 0;
+    }
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue}, 40%, 15%)`;
+  };
+
   return (
     <Show when={!isScreenShare() || !isRemoteScreenShareMuted()}>
       <div
@@ -129,7 +142,7 @@ export function ParticipantTile(props: TileProps) {
             />
           ),
         }}
-        style={{ ...getHeight() }}
+        style={{ ...getHeight(), background: tileBackground() }}
       >
         <Show
           when={isVideo() || isScreenShare()}
@@ -138,7 +151,7 @@ export function ParticipantTile(props: TileProps) {
               <Avatar
                 src={user().avatar}
                 fallback={user().username}
-                size={48}
+                size={32}
                 interactive={false}
               />
             </AvatarOnly>
@@ -284,8 +297,8 @@ const AvatarOnly = styled("div", {
     // TODO: Refactor the avatar component to be reactive later.
     "& > *": {
       width: "auto !important",
-      height: "30% !important",
-      minHeight: "48px",
+      height: "20% !important",
+      minHeight: "32px",
     },
   },
 });

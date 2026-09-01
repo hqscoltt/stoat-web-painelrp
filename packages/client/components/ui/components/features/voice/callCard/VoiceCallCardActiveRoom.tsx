@@ -4,7 +4,6 @@ import { createEffect, createMemo, For, onMount, Show } from "solid-js";
 import { TrackLoop } from "solid-livekit-components";
 import { styled } from "styled-system/jsx";
 
-import { useDevice } from "@revolt/common";
 import { InRoom, useVoice } from "@revolt/rtc";
 import { IconButton } from "@revolt/ui/components/design";
 import { Symbol } from "@revolt/ui/components/utils/Symbol";
@@ -78,27 +77,9 @@ const ChatToggleHolder = styled("div", {
 
 function LayoutButtons() {
   const voice = useVoice();
-  const device = useDevice();
-  const { t } = useLingui();
 
   return (
     <>
-      {/* TODO: Refactor call controls on mobile to make these buttons not overflow */}
-      <Show when={device.layout() === "desktop"}>
-        <IconButton
-          size="sm"
-          variant="standard"
-          onPress={() => voice.toggleLayout("collapsed")}
-          use:floating={{
-            tooltip: {
-              placement: "top",
-              content: t`Collapse call window`,
-            },
-          }}
-        >
-          <Symbol>unfold_less</Symbol>
-        </IconButton>
-      </Show>
       <IconButton
         size="sm"
         variant={"standard"}

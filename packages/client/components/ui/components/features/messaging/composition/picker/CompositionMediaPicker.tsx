@@ -194,6 +194,10 @@ const Base = styled("div", {
     maxWidth: "100%",
     maxHeight: "calc(100% - max(env(keyboard-inset-height), 72px))",
     marginBottom: "env(keyboard-inset-height)",
+    // Matches the FloatingManager convention (tooltips/context menus use
+    // 99/999) so this popup stacks above the call card's Float (max 100),
+    // which shares the same #floating portal mount.
+    zIndex: 999,
   },
 });
 

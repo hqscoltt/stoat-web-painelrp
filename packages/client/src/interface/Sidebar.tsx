@@ -59,10 +59,20 @@ export const Sidebar = (props: {
   const location = useLocation();
 
   // Resizable channel-list column width, Discord-style drag handle at its
-  // right edge. Local to this session (not persisted) for now.
-  const [channelSidebarWidth, setChannelSidebarWidth] = createSignal(280);
+  // right edge. Persisted across reloads via localStorage.
+  const SIDEBAR_WIDTH_KEY = "channelSidebarWidth";
   const MIN_WIDTH = 200,
     MAX_WIDTH = 420;
+
+  const storedWidth = Number(localStorage.getItem(SIDEBAR_WIDTH_KEY));
+  const [channelSidebarWidth, setChannelSidebarWidthSignal] = createSignal(
+    storedWidth >= MIN_WIDTH && storedWidth <= MAX_WIDTH ? storedWidth : 300,
+  );
+
+  function setChannelSidebarWidth(width: number) {
+    setChannelSidebarWidthSignal(width);
+    localStorage.setItem(SIDEBAR_WIDTH_KEY, String(width));
+  }
 
   return (
     <MainBar

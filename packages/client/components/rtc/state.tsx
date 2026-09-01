@@ -29,7 +29,7 @@ import {
 const screenShareHigh60 = new VideoPreset(1920, 1080, 8_000_000, 60, "medium");
 import { Channel } from "stoat.js";
 
-import { SoundController, useSound } from "@revolt/client";
+import { SoundController, useClient, useClientLifecycle, useSound } from "@revolt/client";
 import { useInstance } from "@revolt/instance";
 import { ModalController, useModals } from "@revolt/modal";
 import { useState } from "@revolt/state";
@@ -188,7 +188,13 @@ class Voice {
     this.chatOpen = chatOpen;
     this.#setChatOpen = setChatOpen;
 
-    const [chatWidth, setChatWidth] = createSignal(360);
+    const storedChatWidth = Number(localStorage.getItem("voiceChatWidth"));
+    const [chatWidth, setChatWidth] = createSignal(
+      storedChatWidth >= VOICE_CHAT_MIN_WIDTH &&
+        storedChatWidth <= VOICE_CHAT_MAX_WIDTH
+        ? storedChatWidth
+        : 360,
+    );
     this.chatWidth = chatWidth;
     this.#setChatWidth = setChatWidth;
 
@@ -303,6 +309,11 @@ class Voice {
       this.#setChatOpen(false);
     });
 
+    // Remember the channel so a page reload (Ctrl+R) can silently
+    // reconnect, Discord-style — see the auto-reconnect effect in
+    // VoiceContext below.
+    localStorage.setItem("voiceLastChannel", channel.id);
+
     room.addListener("connected", () => {
       this.#setState("CONNECTED");
       if (this.speakingPermission)
@@ -400,6 +411,7 @@ class Voice {
         this.vidTracks = () => [];
       });
 
+      localStorage.removeItem("voiceLastChannel");
       this.screenShareTracks = new Set();
 
       this.sound.playSound("userLeaveVoice");
@@ -803,12 +815,12 @@ class Voice {
 
   /** Resize the in-call chat sidebar, clamped between a min and max width. */
   setChatWidth(px: number) {
-    this.#setChatWidth(
-      Math.min(
-        VOICE_CHAT_MAX_WIDTH,
-        Math.max(VOICE_CHAT_MIN_WIDTH, Math.round(px)),
-      ),
+    const clamped = Math.min(
+      VOICE_CHAT_MAX_WIDTH,
+      Math.max(VOICE_CHAT_MIN_WIDTH, Math.round(px)),
     );
+    this.#setChatWidth(clamped);
+    localStorage.setItem("voiceChatWidth", String(clamped));
   }
 
   setIsLayoutResizing(value: boolean) {
@@ -860,6 +872,27 @@ export function VoiceContext(props: { children: JSX.Element }) {
   const sound = useSound();
   const device = useDevice();
   const voice = new Voice(state.voice, modals, sound, device);
+
+  // Discord-style: if the page reloads (Ctrl+R) while connected to a voice
+  // channel, silently reconnect once the client has finished its initial
+  // load, provided the channel still exists and we still have permission.
+  const controller = useClientLifecycle();
+  const client = useClient();
+  let attemptedReconnect = false;
+  createEffect(() => {
+    if (attemptedReconnect || !controller.lifecycle.loadedOnce()) return;
+    attemptedReconnect = true;
+
+    const channelId = localStorage.getItem("voiceLastChannel");
+    if (!channelId) return;
+
+    const channel = client().channels.get(channelId);
+    if (channel?.isVoice && channel.havePermission("Connect")) {
+      voice.connect(channel);
+    } else {
+      localStorage.removeItem("voiceLastChannel");
+    }
+  });
 
   return (
     <voiceContext.Provider value={voice}>
