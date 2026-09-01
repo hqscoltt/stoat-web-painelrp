@@ -225,15 +225,13 @@ const ICON_ANIM_KEYFRAMES = `
  * in sync with the "Voz conectada" text next to it.
  */
 function Ping(props: { rtt: number | undefined; color: string }) {
-  const { t } = useLingui();
-
   return (
     <div
       use:floating={{
         tooltip: {
           placement: "top",
           content:
-            props.rtt === undefined ? t`Measuring...` : `${props.rtt}ms`,
+            props.rtt === undefined ? "Medindo..." : `${props.rtt}ms`,
         },
       }}
     >

@@ -126,7 +126,7 @@ export const ServerList = (props: Props) => {
           href="/app"
           use:floating={{
             tooltip: {
-              content: `You have ${homeNotifications()} pending friend requests.`,
+              content: `Você tem ${homeNotifications()} pedidos de amizade pendentes.`,
               placement: "right",
             },
           }}
@@ -303,7 +303,7 @@ export const ServerList = (props: Props) => {
             </Tooltip>
           )}
         </Draggable>
-        <Tooltip placement="right" content={"Create or join a server"}>
+        <Tooltip placement="right" content={"Criar ou entrar em um servidor"}>
           <a
             class={entryContainer()}
             onClick={() => props.onCreateOrJoinServer()}
@@ -312,7 +312,7 @@ export const ServerList = (props: Props) => {
           </a>
         </Tooltip>
         <Show when={instance.isStoat}>
-          <Tooltip placement="right" content={"Find new servers to join"}>
+          <Tooltip placement="right" content={"Encontrar novos servidores"}>
             <a
               href={state.layout.getLastActiveDiscoverPath()}
               class={entryContainer()}
@@ -338,6 +338,7 @@ const ServerListBase = styled("div", {
     flexDirection: "column",
 
     fill: "var(--md-sys-color-on-surface)",
+    background: "var(--md-sys-color-surface-container-lowest)",
   },
 });
 

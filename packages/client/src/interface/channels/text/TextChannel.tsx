@@ -359,7 +359,7 @@ export function TextChannel(props: ChannelPageProps) {
                 <WideSidebarContainer>
                   <SidebarTitle>
                     <Text class="label" size="large">
-                      Search Results
+                      Resultados da Busca
                     </Text>
                   </SidebarTitle>
                   <TextSearchSidebar
@@ -374,7 +374,7 @@ export function TextChannel(props: ChannelPageProps) {
                 <WideSidebarContainer>
                   <SidebarTitle>
                     <Text class="label" size="large">
-                      Pinned Messages
+                      Mensagens Fixadas
                     </Text>
                   </SidebarTitle>
                   <TextSearchSidebar
