@@ -15,6 +15,7 @@ import { useState } from "@revolt/state";
 import { LAYOUT_SECTIONS } from "@revolt/state/stores/Layout";
 
 import { HomeSidebar, ServerList, ServerSidebar } from "./navigation";
+import { AccountBar } from "./navigation/channels/AccountBar";
 
 const MainBar = styled("div", {
   base: {
@@ -27,6 +28,28 @@ const MainBar = styled("div", {
       width: "100vw",
       height: "100%",
     },
+  },
+});
+
+/**
+ * Column holding the channel/DM list plus the pinned AccountBar footer
+ */
+const ChannelColumn = styled("div", {
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    minHeight: 0,
+    height: "100%",
+  },
+});
+
+const ChannelColumnScroll = styled("div", {
+  base: {
+    flexGrow: 1,
+    minHeight: 0,
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
   },
 });
 
@@ -74,11 +97,16 @@ export const Sidebar = (props: {
           !location.pathname.startsWith("/discover")
         }
       >
-        <Switch fallback={<Home />}>
-          <Match when={params.server}>
-            <Server />
-          </Match>
-        </Switch>
+        <ChannelColumn>
+          <ChannelColumnScroll>
+            <Switch fallback={<Home />}>
+              <Match when={params.server}>
+                <Server />
+              </Match>
+            </Switch>
+          </ChannelColumnScroll>
+          <AccountBar />
+        </ChannelColumn>
       </Show>
     </MainBar>
   );

@@ -54,6 +54,10 @@ type State =
 
 export type VoiceLayout = "fullscreen" | "expanded" | "collapsed" | undefined;
 
+/** Bounds for the resizable in-call chat sidebar panel. */
+export const VOICE_CHAT_MIN_WIDTH = 280;
+export const VOICE_CHAT_MAX_WIDTH = 720;
+
 type ScreenShareQuality = Required<
   Pick<ScreenShareCaptureOptions, "contentHint" | "resolution">
 > & {
@@ -104,6 +108,10 @@ class Voice {
    */
   chatOpen: Accessor<boolean>;
   #setChatOpen: Setter<boolean>;
+
+  /** Width (px) of the in-call chat sidebar panel, user-resizable. */
+  chatWidth: Accessor<number>;
+  #setChatWidth: Setter<number>;
 
   private sound: SoundController;
   private device: Device;
@@ -170,6 +178,10 @@ class Voice {
     const [chatOpen, setChatOpen] = createSignal(false);
     this.chatOpen = chatOpen;
     this.#setChatOpen = setChatOpen;
+
+    const [chatWidth, setChatWidth] = createSignal(360);
+    this.chatWidth = chatWidth;
+    this.#setChatWidth = setChatWidth;
 
     const inst = useInstance();
     this.config = inst.config;
@@ -745,17 +757,20 @@ class Voice {
   }
 
   /**
-   * Whether there is currently a remote screen share the local user has
-   * opted to watch. Used to gate the floating PiP widget: it should only
-   * appear while navigated away from the call's own page AND actively
-   * watching someone's stream — not just for being in a voice-only call.
+   * Whether anyone else in the call is currently screen-sharing at all.
+   * Used to gate the floating PiP widget: it should only appear while
+   * navigated away from the call's own page AND someone is sharing their
+   * screen — not just for being in a voice-only call.
+   *
+   * Deliberately does NOT require `isWatchingScreenShare()` (the
+   * bandwidth-saving click-to-watch gate used in the full call view):
+   * that gate is only clickable from a visible tile, so requiring it here
+   * would mean the PiP could never turn on for a share that starts while
+   * you're already away — there'd be nothing to click.
    */
-  hasWatchedScreenShare(): boolean {
+  hasActiveScreenShare(): boolean {
     return this.vidTracks().some(
-      (t) =>
-        t.source === Track.Source.ScreenShare &&
-        !t.participant.isLocal &&
-        this.isWatchingScreenShare(t.participant.identity),
+      (t) => t.source === Track.Source.ScreenShare && !t.participant.isLocal,
     );
   }
 
@@ -771,6 +786,16 @@ class Voice {
 
   toggleChat() {
     this.#setChatOpen((v) => !v);
+  }
+
+  /** Resize the in-call chat sidebar, clamped between a min and max width. */
+  setChatWidth(px: number) {
+    this.#setChatWidth(
+      Math.min(
+        VOICE_CHAT_MAX_WIDTH,
+        Math.max(VOICE_CHAT_MIN_WIDTH, Math.round(px)),
+      ),
+    );
   }
 
   getConnectedUser(userId: string) {

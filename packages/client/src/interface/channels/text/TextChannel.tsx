@@ -234,10 +234,11 @@ export function TextChannel(props: ChannelPageProps) {
             <VoiceChannelCallCardMount channel={props.channel} />
           </Show>
 
-          {/* While this channel's chat is popped out into the sidebar
-              (Discord-style "open chat" during a call), don't also render
-              it here — the call view fills this space instead. */}
-          <Show when={!chatInSidebar()}>
+          {/* Voice channels never show chat inline in the middle — their
+              chat only ever lives in the resizable sidebar panel (opened
+              via the in-call chat bubble or "Abrir chat"). Text channels
+              keep the normal inline layout. */}
+          <Show when={!props.channel.isVoice}>
             <Messages
               channel={props.channel}
               lastReadId={lastId}
@@ -273,21 +274,45 @@ export function TextChannel(props: ChannelPageProps) {
             chatInSidebar()
           }
         >
-          <div
-            ref={sidebarScrollTargetElement}
-            use:scrollable={{
-              direction: "y",
-              showOnHover: true,
-              class: sidebar(),
-            }}
-            style={{
-              width:
-                sidebarState().state !== "default" || chatInSidebar()
-                  ? "360px"
-                  : "",
-            }}
-          >
-            <Switch
+          <SidebarPositioner>
+            <Show when={chatInSidebar()}>
+              <ResizeHandle
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  const startX = e.clientX;
+                  const startWidth = voice.chatWidth();
+
+                  const onMove = (ev: PointerEvent) => {
+                    // Dragging the handle LEFT increases width (the panel
+                    // sits on the right edge of the screen).
+                    voice.setChatWidth(startWidth + (startX - ev.clientX));
+                  };
+                  const onUp = () => {
+                    document.removeEventListener("pointermove", onMove);
+                    document.removeEventListener("pointerup", onUp);
+                  };
+                  document.addEventListener("pointermove", onMove);
+                  document.addEventListener("pointerup", onUp);
+                }}
+              />
+            </Show>
+            <div
+              ref={sidebarScrollTargetElement}
+              use:scrollable={{
+                direction: "y",
+                showOnHover: true,
+                class: sidebar(),
+              }}
+              style={{
+                width:
+                  sidebarState().state !== "default"
+                    ? "360px"
+                    : chatInSidebar()
+                      ? `${voice.chatWidth()}px`
+                      : "",
+              }}
+            >
+              <Switch
               fallback={
                 <MemberSidebar
                   channel={props.channel}
@@ -358,13 +383,14 @@ export function TextChannel(props: ChannelPageProps) {
               </Match>
             </Switch>
 
-            <Show when={sidebarState().state !== "default"}>
-              <Keybind
-                keybind={KeybindAction.CLOSE_SIDEBAR}
-                onPressed={() => setSidebarState({ state: "default" })}
-              />
-            </Show>
-          </div>
+              <Show when={sidebarState().state !== "default"}>
+                <Keybind
+                  keybind={KeybindAction.CLOSE_SIDEBAR}
+                  onPressed={() => setSidebarState({ state: "default" })}
+                />
+              </Show>
+            </div>
+          </SidebarPositioner>
         </Show>
       </Content>
     </>
@@ -433,5 +459,35 @@ const ChatSidebarContainer = styled("div", {
     display: "flex",
     flexDirection: "column",
     overflow: "hidden",
+  },
+});
+
+/**
+ * Wraps the right sidebar together with its resize handle
+ */
+const SidebarPositioner = styled("div", {
+  base: {
+    minHeight: 0,
+    height: "100%",
+    display: "flex",
+    flexDirection: "row",
+  },
+});
+
+/**
+ * Drag handle for resizing the in-call chat sidebar
+ */
+const ResizeHandle = styled("div", {
+  base: {
+    flexShrink: 0,
+    width: "6px",
+    height: "100%",
+    cursor: "col-resize",
+    touchAction: "none",
+
+    "&:hover": {
+      background: "var(--md-sys-color-primary)",
+      opacity: 0.5,
+    },
   },
 });

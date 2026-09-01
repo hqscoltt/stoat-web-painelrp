@@ -187,7 +187,7 @@ export function VoiceCallCardContext(props: { children: JSX.Element }) {
         >
           <Switch>
             <Match
-              when={mode() && inCall() && voice.hasWatchedScreenShare()}
+              when={mode() && inCall() && voice.hasActiveScreenShare()}
             >
               <VoiceCallCardPiP />
             </Match>
