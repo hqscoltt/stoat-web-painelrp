@@ -503,8 +503,10 @@ function VoiceCallDuration(props: { channel: Channel }) {
 const DurationText = styled("span", {
   base: {
     flexShrink: 0,
+    whiteSpace: "nowrap",
     fontSize: "0.75em",
-    color: "var(--md-sys-color-outline)",
+    fontWeight: 600,
+    color: "#23a55a",
     fontVariantNumeric: "tabular-nums",
   },
 });
@@ -592,6 +594,15 @@ function Entry(
             </Show>
           </>
         }
+        persistentAction={
+          <Show
+            when={
+              props.channel.isVoice && props.channel.voiceParticipants.size
+            }
+          >
+            <VoiceCallDuration channel={props.channel} />
+          </Show>
+        }
         actions={
           <Show when={!isMobile}>
             <Show when={canInvite()}>
@@ -637,9 +648,6 @@ function Entry(
         <OverflowingText>
           <TextWithEmoji content={props.channel.name!} />
         </OverflowingText>
-        <Show when={props.channel.isVoice && props.channel.voiceParticipants.size}>
-          <VoiceCallDuration channel={props.channel} />
-        </Show>
       </MenuButton>
 
       <VoiceChannelPreview channel={props.channel} />

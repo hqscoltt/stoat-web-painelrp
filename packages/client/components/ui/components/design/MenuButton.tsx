@@ -42,6 +42,14 @@ export type Props = {
    */
   readonly actions?: JSX.Element;
 
+  /**
+   * Content shown in the same spot as `actions`, but only while NOT
+   * hovering — swaps out for `actions` on hover instead of stacking next
+   * to it. Used for e.g. a voice channel's live call duration, which
+   * should occupy the invite/edit icons' spot until you hover.
+   */
+  readonly persistentAction?: JSX.Element;
+
   readonly noDrawer?: boolean;
 };
 
@@ -63,6 +71,7 @@ export function MenuButton(
     "children",
     "alert",
     "actions",
+    "persistentAction",
   ]);
   let ripple: MdRipple | undefined;
 
@@ -93,6 +102,9 @@ export function MenuButton(
           />
         </span>
       </Show>
+      {local.persistentAction && (
+        <span class="hover-hide">{local.persistentAction}</span>
+      )}
       {local.actions && (
         <Actions class="hover-show" onClick={(e) => e.stopPropagation()}>
           {local.actions}

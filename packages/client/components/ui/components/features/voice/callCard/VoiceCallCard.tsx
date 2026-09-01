@@ -23,6 +23,7 @@ import { SlideState } from "@revolt/ui/components/navigation/SlideDrawer";
 
 import { VoiceCallCardActiveRoom } from "./VoiceCallCardActiveRoom";
 import { VoiceCallCardPiP } from "./VoiceCallCardPiP";
+import { VoiceCallCardPreview } from "./VoiceCallCardPreview";
 
 type Mode = "floating" | "moving";
 type FloatType = "tl" | "tr" | "bl" | "br";
@@ -292,12 +293,13 @@ function VoiceCallCard(props: {
   return (
     <Show when={props.showCard}>
       <Base layout={props.layout as never}>
-        <Card active={props.inCall} layout={props.layout}>
-          {/* No more "Join the voice channel" prompt — clicking a voice
-              channel already auto-connects, so this would only ever flash
-              briefly (or show up on edge cases like a direct link) rather
-              than being a real interactive prompt. */}
-          <Show when={props.inCall}>
+        {/* Full-size in both states now: the preview is a proper
+            full-screen "join call" prompt, not a small inline hint. */}
+        <Card active layout={props.layout}>
+          <Show
+            when={props.inCall}
+            fallback={<VoiceCallCardPreview channel={props.channel} />}
+          >
             <VoiceCallCardActiveRoom />
           </Show>
         </Card>

@@ -6,12 +6,20 @@ import { styled } from "styled-system/jsx";
 
 import { useUsers } from "@revolt/markdown/users";
 import { useVoice } from "@revolt/rtc";
-import { Avatar, Ripple, Text, typography } from "@revolt/ui/components/design";
+import {
+  Avatar,
+  Button,
+  Ripple,
+  Text,
+  typography,
+} from "@revolt/ui/components/design";
 import { Symbol } from "@revolt/ui/components/utils/Symbol";
 import { css } from "styled-system/css";
 
 /**
- * Call card (preview)
+ * Full-screen "join the call" preview shown for a voice channel you're not
+ * currently connected to — big centred prompt over a purple/blue gradient,
+ * with a soft light that follows the cursor (Discord-esque).
  */
 export function VoiceCallCardPreview(props: { channel: Channel }) {
   const voice = useVoice();
@@ -20,59 +28,122 @@ export function VoiceCallCardPreview(props: { channel: Channel }) {
   const ids = () => [...props.channel.voiceParticipants.keys()];
   const users = useUsers(ids);
 
-  function subtext() {
-    const names = users()
-      .map((user) => user?.username)
-      .filter((x) => x);
+  let ref: HTMLDivElement | undefined;
 
-    if (names.length > 3) {
-      return t`with ${names.length} others`;
-    } else if (names.length && names.length !== 0) {
-      return t`with ${names.join(", ")}`;
-    } else {
-      return t`Start the call`;
-    }
+  function onPointerMove(e: PointerEvent) {
+    if (!ref) return;
+    const rect = ref.getBoundingClientRect();
+    ref.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+    ref.style.setProperty("--my", `${e.clientY - rect.top}px`);
   }
 
   return (
-    <Preview onClick={() => voice.connect(props.channel)}>
+    <Preview
+      ref={ref}
+      onPointerMove={onPointerMove}
+      onClick={() => voice.connect(props.channel)}
+    >
       <Ripple />
-      <Avatars>
-        <For each={users()} fallback={<Symbol size={24}>voice_chat</Symbol>}>
-          {(user) => (
-            <Avatar size={24} src={user?.avatar} fallback={user?.username} />
-          )}
-        </For>
-      </Avatars>
-      <Text class="title" size="large">
+      <ChannelName>
+        <Symbol size={20}>headset_mic</Symbol>
+        {props.channel.name}
+      </ChannelName>
+
+      <Center>
         <Show
-          when={voice.state() === "READY"}
-          fallback={<Trans>Switch to this voice channel</Trans>}
+          when={users().length}
+          fallback={<Symbol size={44}>voice_chat</Symbol>}
         >
-          <Trans>Join the voice channel</Trans>
+          <Avatars>
+            <For each={users()}>
+              {(user) => (
+                <Avatar size={44} src={user?.avatar} fallback={user?.username} />
+              )}
+            </For>
+          </Avatars>
         </Show>
-      </Text>
-      <p class={css(typography.raw({ class: "body" }), LineClampText)}>
-        {subtext()}
-      </p>
+
+        <Text class="title" size="large">
+          <Show
+            when={voice.state() === "READY"}
+            fallback={<Trans>Switch to this voice channel</Trans>}
+          >
+            <Trans>Join the voice channel</Trans>
+          </Show>
+        </Text>
+
+        <p class={css(typography.raw({ class: "body" }), Subtext)}>
+          <Show
+            when={users().length}
+            fallback={<Trans>Be the first to join</Trans>}
+          >
+            {t`with ${users()
+              .map((u) => u?.username)
+              .filter(Boolean)
+              .join(", ")}`}
+          </Show>
+        </p>
+
+        <Button variant="filled" size="md">
+          <Symbol>call</Symbol> <Trans>Join Voice Channel</Trans>
+        </Button>
+      </Center>
     </Preview>
   );
 }
 
 const Preview = styled("div", {
   base: {
-    position: "relative", // <Ripple />
-    borderRadius: "var(--borderRadius-lg)",
+    "--mx": "50%",
+    "--my": "50%",
 
+    position: "relative",
+    overflow: "hidden",
+    cursor: "pointer",
+
+    width: "100%",
     height: "100%",
-    justifyContent: "center",
 
     display: "flex",
     flexDirection: "column",
-    gap: "var(--gap-sm)",
-    padding: "var(--gap-lg)",
 
-    color: "var(--md-sys-color-on-surface)",
+    color: "#fff",
+    background: `
+      radial-gradient(500px circle at var(--mx) var(--my), rgba(168, 130, 255, 0.35), transparent 60%),
+      linear-gradient(160deg, #2b1a5e 0%, #1c1440 45%, #101a3a 100%)
+    `,
+    transition: "background 0.05s linear",
+  },
+});
+
+const ChannelName = styled("div", {
+  base: {
+    display: "flex",
+    alignItems: "center",
+    gap: "var(--gap-sm)",
+
+    padding: "var(--gap-lg)",
+    fontWeight: 600,
+    fontSize: "1.1em",
+    zIndex: 1,
+
+    textShadow: "0 1px 4px rgba(0, 0, 0, 0.4)",
+  },
+});
+
+const Center = styled("div", {
+  base: {
+    flexGrow: 1,
+
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "var(--gap-md)",
+
+    zIndex: 1,
+    textAlign: "center",
+    textShadow: "0 1px 4px rgba(0, 0, 0, 0.4)",
   },
 });
 
@@ -80,16 +151,19 @@ const Avatars = styled("div", {
   base: {
     display: "flex",
     flexShrink: 0,
-    height: "fit-content",
+
+    "& > *": {
+      border: "3px solid #1c1440",
+      borderRadius: "var(--borderRadius-full)",
+    },
 
     "& :not(:first-child)": {
-      marginInlineStart: "-9px",
+      marginInlineStart: "-16px",
     },
   },
 });
 
-const LineClampText = css.raw({
-  lineClamp: "2",
-  overflow: "hidden",
-  display: "-webkit-box",
+const Subtext = css.raw({
+  maxWidth: "400px",
+  opacity: 0.8,
 });
