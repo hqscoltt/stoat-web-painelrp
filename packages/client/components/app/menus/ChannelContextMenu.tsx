@@ -5,9 +5,11 @@ import { Channel } from "stoat.js";
 
 import { useInstance } from "@revolt/instance";
 import { useModals } from "@revolt/modal";
+import { useVoice } from "@revolt/rtc";
 import { useState } from "@revolt/state";
 
 import MdBadge from "@material-design-icons/svg/outlined/badge.svg?component-solid";
+import MdChat from "@material-design-icons/svg/outlined/chat.svg?component-solid";
 import MdDelete from "@material-design-icons/svg/outlined/delete.svg?component-solid";
 import MdGroupAdd from "@material-design-icons/svg/outlined/group_add.svg?component-solid";
 import MdLibraryAdd from "@material-design-icons/svg/outlined/library_add.svg?component-solid";
@@ -30,7 +32,15 @@ import { NotificationContextMenu } from "./shared/NotificationContextMenu";
 export function ChannelContextMenu(props: { channel: Channel }) {
   const state = useState();
   const instance = useInstance();
+  const voice = useVoice();
   const { openModal } = useModals();
+
+  /**
+   * Whether we're currently in a call with this channel — "Open chat" only
+   * makes sense for the voice channel you're actively connected to.
+   */
+  const inThisCall = () =>
+    props.channel.isVoice && voice.channel()?.id === props.channel.id;
 
   /**
    * Mark channel as read
@@ -132,7 +142,9 @@ export function ChannelContextMenu(props: { channel: Channel }) {
     <ContextMenu>
       <Show
         when={
-          props.channel.unread || props.channel.havePermission("InviteOthers")
+          props.channel.unread ||
+          props.channel.havePermission("InviteOthers") ||
+          inThisCall()
         }
       >
         <Show when={props.channel.unread}>
@@ -143,6 +155,15 @@ export function ChannelContextMenu(props: { channel: Channel }) {
         <Show when={props.channel.havePermission("InviteOthers")}>
           <ContextMenuButton icon={MdGroupAdd} onClick={createInvite}>
             <Trans>Create invite</Trans>
+          </ContextMenuButton>
+        </Show>
+        <Show when={inThisCall()}>
+          <ContextMenuButton icon={MdChat} onClick={() => voice.toggleChat()}>
+            <Switch fallback={<Trans>Open chat</Trans>}>
+              <Match when={voice.chatOpen()}>
+                <Trans>Close chat</Trans>
+              </Match>
+            </Switch>
           </ContextMenuButton>
         </Show>
         <ContextMenuDivider />

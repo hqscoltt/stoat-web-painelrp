@@ -186,7 +186,9 @@ export function VoiceCallCardContext(props: { children: JSX.Element }) {
           fullscreen={voice.layout() === "fullscreen"}
         >
           <Switch>
-            <Match when={mode() && inCall()}>
+            <Match
+              when={mode() && inCall() && voice.hasWatchedScreenShare()}
+            >
               <VoiceCallCardPiP />
             </Match>
             <Match when={channel()}>

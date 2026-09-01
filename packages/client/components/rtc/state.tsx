@@ -97,6 +97,14 @@ class Voice {
   watchingScreenShares: Accessor<Set<string>>;
   #setWatchingScreenShares: Setter<Set<string>>;
 
+  /**
+   * Whether the in-call text chat panel is open, swapping the right
+   * sidebar from the member list to this channel's messages — Discord's
+   * "open chat while in a voice call" behaviour.
+   */
+  chatOpen: Accessor<boolean>;
+  #setChatOpen: Setter<boolean>;
+
   private sound: SoundController;
   private device: Device;
 
@@ -158,6 +166,10 @@ class Voice {
     >(new Set());
     this.watchingScreenShares = watchingScreenShares;
     this.#setWatchingScreenShares = setWatchingScreenShares;
+
+    const [chatOpen, setChatOpen] = createSignal(false);
+    this.chatOpen = chatOpen;
+    this.#setChatOpen = setChatOpen;
 
     const inst = useInstance();
     this.config = inst.config;
@@ -260,6 +272,10 @@ class Voice {
       this.#setState("CONNECTING");
       this.#setVideo(false);
       this.#setScreenshare(false);
+      // Open maximized by default, Discord-style; chat starts closed and
+      // is only shown if the user explicitly opens it via the chat bubble.
+      this.#setLayout("expanded");
+      this.#setChatOpen(false);
     });
 
     room.addListener("connected", () => {
@@ -355,6 +371,7 @@ class Voice {
         this.#setRoom();
         this.#setChannel();
         this.#setLayout();
+        this.#setChatOpen(false);
         this.vidTracks = () => [];
       });
 
@@ -725,6 +742,35 @@ class Voice {
    */
   isWatchingScreenShare(participantId: string): boolean {
     return this.watchingScreenShares().has(participantId);
+  }
+
+  /**
+   * Whether there is currently a remote screen share the local user has
+   * opted to watch. Used to gate the floating PiP widget: it should only
+   * appear while navigated away from the call's own page AND actively
+   * watching someone's stream — not just for being in a voice-only call.
+   */
+  hasWatchedScreenShare(): boolean {
+    return this.vidTracks().some(
+      (t) =>
+        t.source === Track.Source.ScreenShare &&
+        !t.participant.isLocal &&
+        this.isWatchingScreenShare(t.participant.identity),
+    );
+  }
+
+  /** Open the in-call text chat panel, replacing the member list. */
+  openChat() {
+    this.#setChatOpen(true);
+  }
+
+  /** Close the in-call text chat panel, restoring the member list. */
+  closeChat() {
+    this.#setChatOpen(false);
+  }
+
+  toggleChat() {
+    this.#setChatOpen((v) => !v);
   }
 
   getConnectedUser(userId: string) {

@@ -15,17 +15,21 @@ import { decodeTime, ulid } from "ulid";
 import { DraftMessages, Messages } from "@revolt/app";
 import { useClient } from "@revolt/client";
 import { Keybind, KeybindAction, createKeybind } from "@revolt/keybinds";
+import { useVoice } from "@revolt/rtc";
 import { useNavigate, useSmartParams } from "@revolt/routing";
 import { useState } from "@revolt/state";
 import { LAYOUT_SECTIONS } from "@revolt/state/stores/Layout";
 import {
   BelowFloatingHeader,
   Header,
+  IconButton,
   NewMessages,
   Text,
   main,
 } from "@revolt/ui";
 import { VoiceChannelCallCardMount } from "@revolt/ui/components/features/voice/callCard/VoiceCallCard";
+
+import MdClose from "@material-design-icons/svg/outlined/close.svg?component-solid";
 
 import { ChannelHeader } from "../ChannelHeader";
 import { ChannelPageProps } from "../ChannelPage";
@@ -76,6 +80,7 @@ const LARGE_SERVERS = [
 export function TextChannel(props: ChannelPageProps) {
   const state = useState();
   const client = useClient();
+  const voice = useVoice();
 
   // Last unread message id
   const [lastId, setLastId] = createSignal<string>();
@@ -92,6 +97,16 @@ export function TextChannel(props: ChannelPageProps) {
 
   const canConnect = () =>
     props.channel.isVoice && props.channel.havePermission("Connect");
+
+  /**
+   * Whether this channel's chat should render in the right sidebar column
+   * (in place of the member list) instead of inline below the call view —
+   * the Discord-style "open chat while in a voice call" toggle.
+   */
+  const chatInSidebar = () =>
+    voice.chatOpen() &&
+    props.channel.isVoice &&
+    voice.channel()?.id === props.channel.id;
 
   // Get a reference to the message box's load latest function
   let jumpToBottomRef: ((nearby?: string) => void) | undefined;
@@ -219,28 +234,33 @@ export function TextChannel(props: ChannelPageProps) {
             <VoiceChannelCallCardMount channel={props.channel} />
           </Show>
 
-          <Messages
-            channel={props.channel}
-            lastReadId={lastId}
-            pendingMessages={(pendingProps) => (
-              <DraftMessages
-                channel={props.channel}
-                tail={pendingProps.tail}
-                sentIds={pendingProps.ids}
-              />
-            )}
-            highlightedMessageId={highlightMessageId}
-            clearHighlightedMessage={() => navigate(".")}
-            jumpToBottomRef={(ref) => (jumpToBottomRef = ref)}
-            atEnd={[atEnd, setEnd]}
-          />
+          {/* While this channel's chat is popped out into the sidebar
+              (Discord-style "open chat" during a call), don't also render
+              it here — the call view fills this space instead. */}
+          <Show when={!chatInSidebar()}>
+            <Messages
+              channel={props.channel}
+              lastReadId={lastId}
+              pendingMessages={(pendingProps) => (
+                <DraftMessages
+                  channel={props.channel}
+                  tail={pendingProps.tail}
+                  sentIds={pendingProps.ids}
+                />
+              )}
+              highlightedMessageId={highlightMessageId}
+              clearHighlightedMessage={() => navigate(".")}
+              jumpToBottomRef={(ref) => (jumpToBottomRef = ref)}
+              atEnd={[atEnd, setEnd]}
+            />
 
-          <CompositionInfo channel={props.channel} />
+            <CompositionInfo channel={props.channel} />
 
-          <MessageComposition
-            channel={props.channel}
-            onMessageSend={() => jumpToBottomRef?.()}
-          />
+            <MessageComposition
+              channel={props.channel}
+              onMessageSend={() => jumpToBottomRef?.()}
+            />
+          </Show>
         </main>
         <Show
           when={
@@ -249,7 +269,8 @@ export function TextChannel(props: ChannelPageProps) {
               true,
             ) &&
               canIHasSidebar(props.channel)) ||
-            sidebarState().state !== "default"
+            sidebarState().state !== "default" ||
+            chatInSidebar()
           }
         >
           <div
@@ -260,7 +281,10 @@ export function TextChannel(props: ChannelPageProps) {
               class: sidebar(),
             }}
             style={{
-              width: sidebarState().state !== "default" ? "360px" : "",
+              width:
+                sidebarState().state !== "default" || chatInSidebar()
+                  ? "360px"
+                  : "",
             }}
           >
             <Switch
@@ -272,6 +296,38 @@ export function TextChannel(props: ChannelPageProps) {
                 />
               }
             >
+              <Match when={chatInSidebar()}>
+                <ChatSidebarContainer>
+                  <SidebarTitle>
+                    <Text class="label" size="large">
+                      {props.channel.name}
+                    </Text>
+                    <IconButton
+                      size="xs"
+                      variant="standard"
+                      onPress={() => voice.closeChat()}
+                    >
+                      <MdClose />
+                    </IconButton>
+                  </SidebarTitle>
+                  <Messages
+                    channel={props.channel}
+                    lastReadId={lastId}
+                    pendingMessages={(pendingProps) => (
+                      <DraftMessages
+                        channel={props.channel}
+                        tail={pendingProps.tail}
+                        sentIds={pendingProps.ids}
+                      />
+                    )}
+                    highlightedMessageId={highlightMessageId}
+                    clearHighlightedMessage={() => navigate(".")}
+                    atEnd={[atEnd, setEnd]}
+                  />
+                  <CompositionInfo channel={props.channel} />
+                  <MessageComposition channel={props.channel} />
+                </ChatSidebarContainer>
+              </Match>
               <Match when={sidebarState().state === "search"}>
                 <WideSidebarContainer>
                   <SidebarTitle>
@@ -359,5 +415,23 @@ const SidebarTitle = styled("div", {
   base: {
     padding: "var(--gap-md)",
     color: "var(--md-sys-color-on-surface)",
+
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+});
+
+/**
+ * Container for a channel's chat popped out into the sidebar
+ */
+const ChatSidebarContainer = styled("div", {
+  base: {
+    height: "100%",
+    minHeight: 0,
+
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
   },
 });

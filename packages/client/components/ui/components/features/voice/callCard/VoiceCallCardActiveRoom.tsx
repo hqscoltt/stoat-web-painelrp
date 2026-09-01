@@ -23,6 +23,7 @@ export function VoiceCallCardActiveRoom() {
 
   return (
     <View collapsed={collapsed()}>
+      <ChatToggle />
       <Participants />
       <VoiceCallControls>
         <VoiceCallControlHolder left collapsed={collapsed()}>
@@ -36,6 +37,44 @@ export function VoiceCallCardActiveRoom() {
     </View>
   );
 }
+
+/**
+ * Chat bubble in the top-right corner of the call view — Discord-style.
+ * Swaps the right sidebar between the member list and this channel's
+ * text chat, without changing the call's own layout (participants stay
+ * centred either way).
+ */
+function ChatToggle() {
+  const voice = useVoice();
+  const { t } = useLingui();
+
+  return (
+    <ChatToggleHolder>
+      <IconButton
+        size="sm"
+        variant={voice.chatOpen() ? "filled" : "standard"}
+        onPress={() => voice.toggleChat()}
+        use:floating={{
+          tooltip: {
+            placement: "left",
+            content: voice.chatOpen() ? t`Close chat` : t`Open chat`,
+          },
+        }}
+      >
+        <Symbol fill={voice.chatOpen()}>chat</Symbol>
+      </IconButton>
+    </ChatToggleHolder>
+  );
+}
+
+const ChatToggleHolder = styled("div", {
+  base: {
+    position: "absolute",
+    top: "var(--gap-md)",
+    right: "var(--gap-md)",
+    zIndex: 3,
+  },
+});
 
 function LayoutButtons() {
   const voice = useVoice();
@@ -206,6 +245,7 @@ function FocusedParticipant() {
 
 const View = styled("div", {
   base: {
+    position: "relative",
     minHeight: 0,
     height: "100%",
     width: "100%",
