@@ -23,7 +23,6 @@ import { SlideState } from "@revolt/ui/components/navigation/SlideDrawer";
 
 import { VoiceCallCardActiveRoom } from "./VoiceCallCardActiveRoom";
 import { VoiceCallCardPiP } from "./VoiceCallCardPiP";
-import { VoiceCallCardPreview } from "./VoiceCallCardPreview";
 
 type Mode = "floating" | "moving";
 type FloatType = "tl" | "tr" | "bl" | "br";
@@ -294,10 +293,11 @@ function VoiceCallCard(props: {
     <Show when={props.showCard}>
       <Base layout={props.layout as never}>
         <Card active={props.inCall} layout={props.layout}>
-          <Show
-            when={props.inCall}
-            fallback={<VoiceCallCardPreview channel={props.channel} />}
-          >
+          {/* No more "Join the voice channel" prompt — clicking a voice
+              channel already auto-connects, so this would only ever flash
+              briefly (or show up on edge cases like a direct link) rather
+              than being a real interactive prompt. */}
+          <Show when={props.inCall}>
             <VoiceCallCardActiveRoom />
           </Show>
         </Card>

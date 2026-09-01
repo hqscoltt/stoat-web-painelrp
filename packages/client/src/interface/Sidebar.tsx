@@ -32,28 +32,6 @@ const MainBar = styled("div", {
 });
 
 /**
- * Column holding the channel/DM list plus the pinned AccountBar footer
- */
-const ChannelColumn = styled("div", {
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    minHeight: 0,
-    height: "100%",
-  },
-});
-
-const ChannelColumnScroll = styled("div", {
-  base: {
-    flexGrow: 1,
-    minHeight: 0,
-    display: "flex",
-    flexDirection: "column",
-    overflow: "hidden",
-  },
-});
-
-/**
  * Left-most channel navigation sidebar
  */
 export const Sidebar = (props: {
@@ -97,17 +75,13 @@ export const Sidebar = (props: {
           !location.pathname.startsWith("/discover")
         }
       >
-        <ChannelColumn>
-          <ChannelColumnScroll>
-            <Switch fallback={<Home />}>
-              <Match when={params.server}>
-                <Server />
-              </Match>
-            </Switch>
-          </ChannelColumnScroll>
-          <AccountBar />
-        </ChannelColumn>
+        <Switch fallback={<Home />}>
+          <Match when={params.server}>
+            <Server />
+          </Match>
+        </Switch>
       </Show>
+      <AccountBar />
     </MainBar>
   );
 };

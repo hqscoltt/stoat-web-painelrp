@@ -1,6 +1,15 @@
-import { createMemo, createSignal, For, onCleanup, Show } from "solid-js";
+import {
+  createMemo,
+  createSignal,
+  For,
+  onCleanup,
+  onMount,
+  Show,
+} from "solid-js";
+import { Portal } from "solid-js/web";
 import { useMediaDeviceSelect } from "solid-livekit-components";
 
+import { createResizeObserver } from "@solid-primitives/resize-observer";
 import { Trans, useLingui } from "@lingui/solid/macro";
 import { styled } from "styled-system/jsx";
 
@@ -18,9 +27,15 @@ import { Symbol } from "@revolt/ui/components/utils/Symbol";
 import { UserMenu } from "../servers/UserMenu";
 
 /**
- * Persistent Discord-style account bar pinned to the bottom of the channel
- * sidebar — self avatar/status, mic/deafen with device pickers, settings,
- * and (while connected) call status, ping, and quick call controls.
+ * Persistent Discord-style account bar — self avatar/status, mic/deafen
+ * with device pickers, settings, and (while connected) call status, ping,
+ * and quick call controls.
+ *
+ * Rendered as a fixed-position overlay spanning the full width of the
+ * server rail + channel list (measured off `.main_bar`), so it floats
+ * above both independently-scrollable columns instead of pushing into
+ * either one's layout flow — matching Discord, where this bar ignores
+ * the server rail entirely and both columns keep scrolling underneath it.
  */
 export function AccountBar() {
   const user = useUser();
@@ -31,9 +46,21 @@ export function AccountBar() {
   const { t } = useLingui();
 
   const [anchor, setAnchor] = createSignal<HTMLDivElement>();
+  const [rect, setRect] = createSignal({ x: 0, width: 0 });
+
+  onMount(() => {
+    const target = document.querySelector(".main_bar");
+    if (!target) return;
+    createResizeObserver(target, () => {
+      const r = target.getBoundingClientRect();
+      setRect({ x: r.x, width: r.width });
+    });
+  });
 
   return (
-    <Bar>
+    <Portal mount={document.getElementById("floating")!}>
+      <FloatingPosition style={{ left: `${rect().x}px`, width: `${rect().width}px` }}>
+        <Bar>
       <Show when={voice.channel()}>
         <ConnectedRow>
           <ConnectedInfo>
@@ -129,7 +156,9 @@ export function AccountBar() {
           </IconButton>
         </Controls>
       </Row>
-    </Bar>
+        </Bar>
+      </FloatingPosition>
+    </Portal>
   );
 }
 
@@ -269,13 +298,30 @@ function DeviceChevron(props: { kind: "audioinput" | "audiooutput" }) {
   );
 }
 
+/**
+ * Fixed-position wrapper that pins the bar to the bottom-left corner of the
+ * whole app, spanning `.main_bar`'s measured width (server rail + channel
+ * list) — independent of either column's own scroll position.
+ */
+const FloatingPosition = styled("div", {
+  base: {
+    position: "fixed",
+    bottom: "10px",
+    zIndex: 20,
+    padding: "0 var(--gap-sm)",
+  },
+});
+
 const Bar = styled("div", {
   base: {
     flexShrink: 0,
     display: "flex",
     flexDirection: "column",
+    overflow: "hidden",
 
+    borderRadius: "var(--borderRadius-lg)",
     background: "var(--md-sys-color-surface-container-low)",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
   },
 });
 
