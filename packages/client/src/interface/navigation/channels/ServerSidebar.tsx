@@ -7,6 +7,8 @@ import {
   Show,
   Switch,
   createMemo,
+  createSignal,
+  onCleanup,
 } from "solid-js";
 
 import { useLingui } from "@lingui/solid/macro";
@@ -37,6 +39,7 @@ import { VoiceChannelPreview } from "@revolt/ui/components/features/voice/VoiceC
 import { createDragHandle } from "@revolt/ui/components/utils/Draggable";
 import { Symbol } from "@revolt/ui/components/utils/Symbol";
 
+import MdAdd from "@material-design-icons/svg/outlined/add.svg?component-solid";
 import MdChevronRight from "@material-design-icons/svg/filled/chevron_right.svg?component-solid";
 import MdSettings from "@material-symbols/svg-400/outlined/settings-fill.svg?component-solid";
 
@@ -334,6 +337,7 @@ function Category(
     },
 ) {
   const state = useState();
+  const { openModal } = useModals();
   const isOpen = () => state.layout.getSectionState(props.category.id, true);
   const { isMobile } = useDevice();
 
@@ -359,6 +363,26 @@ function Category(
             {...createDragHandle(props.dragDisabled, props.setDragDisabled)}
           >
             {props.category.title}
+            <Show when={props.server.havePermission("ManageChannel")}>
+              <a
+                use:floating={{
+                  tooltip: {
+                    placement: "top",
+                    content: "Create Channel",
+                  },
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openModal({
+                    type: "create_channel",
+                    server: props.server,
+                    categoryId: props.category.id,
+                  });
+                }}
+              >
+                <MdAdd {...iconSize(14)} />
+              </a>
+            </Show>
             <MdChevronRight {...iconSize(12)} />
           </CategoryBase>
         </div>
@@ -443,6 +467,45 @@ const CategoryBase = styled("div", {
         },
       },
     },
+  },
+});
+
+/**
+ * Live "call duration" timer shown next to a voice channel's name once
+ * anyone is connected — ticks up from whoever joined first, Discord-style.
+ */
+function VoiceCallDuration(props: { channel: Channel }) {
+  const [now, setNow] = createSignal(Date.now());
+
+  const interval = setInterval(() => setNow(Date.now()), 1000);
+  onCleanup(() => clearInterval(interval));
+
+  const elapsed = createMemo(() => {
+    const joinTimes = [...props.channel.voiceParticipants.values()].map(
+      (p) => p.joinedAt.getTime(),
+    );
+    if (!joinTimes.length) return 0;
+    return Math.max(0, Math.floor((now() - Math.min(...joinTimes)) / 1000));
+  });
+
+  const formatted = createMemo(() => {
+    const s = elapsed();
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`;
+  });
+
+  return <DurationText>{formatted()}</DurationText>;
+}
+
+const DurationText = styled("span", {
+  base: {
+    flexShrink: 0,
+    fontSize: "0.75em",
+    color: "var(--md-sys-color-outline)",
+    fontVariantNumeric: "tabular-nums",
   },
 });
 
@@ -574,6 +637,9 @@ function Entry(
         <OverflowingText>
           <TextWithEmoji content={props.channel.name!} />
         </OverflowingText>
+        <Show when={props.channel.isVoice && props.channel.voiceParticipants.size}>
+          <VoiceCallDuration channel={props.channel} />
+        </Show>
       </MenuButton>
 
       <VoiceChannelPreview channel={props.channel} />

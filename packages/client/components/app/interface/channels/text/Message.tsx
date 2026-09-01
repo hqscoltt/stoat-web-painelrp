@@ -145,7 +145,8 @@ export function Message(props: Props) {
     props.message.member?.pronouns ?? props.message.author?.pronouns;
 
   return (
-    <MessageContext message={props.message} reactPicker={reactPicker}>
+    <Show when={props.message.systemMessage?.type !== "call_started"}>
+      <MessageContext message={props.message} reactPicker={reactPicker}>
       <MessageContainer
         ref={msgRef}
         onHover={setIsHovering}
@@ -383,7 +384,8 @@ export function Message(props: Props) {
           removeReaction={unreact}
         />
       </MessageContainer>
-    </MessageContext>
+      </MessageContext>
+    </Show>
   );
 }
 
