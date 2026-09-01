@@ -492,6 +492,20 @@ function Entry(
     <Column gap="sm">
       <MenuButton
         href={`/server/${props.channel.serverId}/channel/${props.channel.id}`}
+        onClick={() => {
+          // Discord/Meet-style behaviour: clicking a voice channel joins it
+          // immediately (no separate "Join voice channel" click required),
+          // and clicking a *different* voice channel while already in a
+          // call switches straight over — voice.connect() already tears
+          // down any existing call before connecting the new one.
+          if (
+            props.channel.isVoice &&
+            !inCall() &&
+            props.channel.havePermission("Connect")
+          ) {
+            voice.connect(props.channel);
+          }
+        }}
         use:floating={props.menuGenerator(props.channel)}
         size="normal"
         alert={alertState()}
