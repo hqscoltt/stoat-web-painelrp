@@ -22,7 +22,13 @@ import { useModals } from "@revolt/modal";
 import { useVoice } from "@revolt/rtc";
 import { useInstance } from "@revolt/instance";
 import { useState } from "@revolt/state";
-import { Avatar, IconButton, Text } from "@revolt/ui";
+import {
+  Avatar,
+  ICON_ANIM_KEYFRAMES,
+  IconAnim,
+  IconButton,
+  Text,
+} from "@revolt/ui";
 import { Symbol } from "@revolt/ui/components/utils/Symbol";
 import { UserMenu } from "../servers/UserMenu";
 
@@ -54,11 +60,38 @@ export function AccountBar() {
   const pingColor = createMemo(() => pingColorFor(rtt()));
 
   onMount(() => {
-    const pingInterval = setInterval(() => {
-      // `engine`/`client`/`rtt` are internal LiveKit APIs not covered by
-      // the public TypeScript types, but are the only way to read RTT.
+    const pingInterval = setInterval(async () => {
+      // `engine.client.rtt` only measures the signalling WebSocket's RTT,
+      // which (behind a reverse proxy/tunnel) can take a completely
+      // different, slower path than the actual audio/video. Read the real
+      // media transport's RTT instead, straight from the browser's own
+      // WebRTC stats for the peer connection carrying the media — this is
+      // an internal LiveKit API not covered by the public TypeScript types.
       // @ts-expect-error accessing internal LiveKit API for ping display
-      setRtt(voice.room()?.engine?.client?.rtt as number | undefined);
+      const pcManager = voice.room()?.engine?.pcManager;
+      const pc: RTCPeerConnection | undefined =
+        pcManager?.subscriber?.pc ?? pcManager?.publisher?.pc;
+
+      if (!pc) {
+        setRtt(undefined);
+        return;
+      }
+
+      const stats = await pc.getStats();
+      let rttSeconds: number | undefined;
+      stats.forEach((report) => {
+        if (
+          report.type === "candidate-pair" &&
+          (report.state === "succeeded" || report.nominated) &&
+          typeof report.currentRoundTripTime === "number"
+        ) {
+          rttSeconds = report.currentRoundTripTime;
+        }
+      });
+
+      setRtt(
+        rttSeconds === undefined ? undefined : Math.round(rttSeconds * 1000),
+      );
     }, 2000);
     onCleanup(() => clearInterval(pingInterval));
   });
@@ -196,30 +229,6 @@ function pingColorFor(ms: number | undefined): string {
   return "#da373c";
 }
 
-const ICON_ANIM_KEYFRAMES = `
-@keyframes account-bar-wiggle {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-12deg); }
-  75% { transform: rotate(12deg); }
-}
-@keyframes account-bar-pop {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.18); }
-}
-@keyframes account-bar-jump {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
-@keyframes account-bar-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(90deg); }
-}
-@keyframes account-bar-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(2px); }
-}
-`;
-
 /**
  * Signal-latency indicator — colour is driven from the parent so it stays
  * in sync with the "Voz conectada" text next to it.
@@ -227,6 +236,12 @@ const ICON_ANIM_KEYFRAMES = `
 function Ping(props: { rtt: number | undefined; color: string }) {
   return (
     <div
+      // Dynamic per-render colours like this don't flow reliably through
+      // Symbol's `color` prop (Panda's styled-system generates CSS classes
+      // from statically-analyzable values, not arbitrary runtime strings) —
+      // an inline style + normal CSS colour inheritance always works, same
+      // approach already used for the "Voz conectada" text next to this.
+      style={{ color: props.color }}
       use:floating={{
         tooltip: {
           placement: "top",
@@ -236,7 +251,7 @@ function Ping(props: { rtt: number | undefined; color: string }) {
       }}
     >
       <IconAnim kind="pop">
-        <Symbol color={props.color}>wifi</Symbol>
+        <Symbol>wifi</Symbol>
       </IconAnim>
     </div>
   );
@@ -419,31 +434,6 @@ const ChannelNameText = styled("span", {
  * Wraps an icon to give it a small, tasteful hover animation — matching
  * Discord's mic-wiggle/hangup-jump/etc. micro-interactions.
  */
-const IconAnim = styled("span", {
-  base: {
-    display: "inline-flex",
-  },
-  variants: {
-    kind: {
-      wiggle: {
-        "&:hover": { animation: "account-bar-wiggle 0.4s ease" },
-      },
-      pop: {
-        "&:hover": { animation: "account-bar-pop 0.3s ease" },
-      },
-      jump: {
-        "&:hover": { animation: "account-bar-jump 0.3s ease" },
-      },
-      spin: {
-        "&:hover": { animation: "account-bar-spin 0.3s ease" },
-      },
-      bounce: {
-        "&:hover": { animation: "account-bar-bounce 0.3s ease" },
-      },
-    },
-  },
-});
-
 const Row = styled("div", {
   base: {
     display: "flex",

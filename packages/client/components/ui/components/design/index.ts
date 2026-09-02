@@ -35,6 +35,7 @@ export { type DialogProps, Dialog } from "./Dialog";
 export { Fab } from "./Fab";
 export { FloatingSelect } from "./FloatingSelect";
 export { IconButton } from "./IconButton";
+export { ICON_ANIM_KEYFRAMES, IconAnim } from "./IconAnim";
 export { List } from "./List";
 export { CircularProgress } from "./LoadingProgress";
 export { LoadingScreen } from "./LoadingScreen";

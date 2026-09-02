@@ -114,6 +114,10 @@ export function UserMenu(props: Props) {
               position: position.strategy,
               top: `${position.y ?? 0}px`,
               left: `${position.x ?? 0}px`,
+              // Shares the #floating portal mount with the account bar
+              // (z-index 20) and the call card overlay (z-index up to 100)
+              // — without an explicit z-index this stacks below both.
+              "z-index": 999,
             }}
             initial={{ opacity: 0, x: -24 }}
             animate={{ opacity: 1, x: 0 }}

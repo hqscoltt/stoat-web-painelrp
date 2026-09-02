@@ -5,7 +5,7 @@ import { TrackLoop } from "solid-livekit-components";
 import { styled } from "styled-system/jsx";
 
 import { InRoom, useVoice } from "@revolt/rtc";
-import { IconButton } from "@revolt/ui/components/design";
+import { IconAnim, IconButton } from "@revolt/ui/components/design";
 import { Symbol } from "@revolt/ui/components/utils/Symbol";
 import { scrollableStyles } from "@revolt/ui/directives";
 
@@ -45,7 +45,6 @@ export function VoiceCallCardActiveRoom() {
  */
 function ChatToggle() {
   const voice = useVoice();
-  const { t } = useLingui();
 
   return (
     <ChatToggleHolder>
@@ -56,11 +55,13 @@ function ChatToggle() {
         use:floating={{
           tooltip: {
             placement: "left",
-            content: voice.chatOpen() ? t`Close chat` : t`Open chat`,
+            content: voice.chatOpen() ? "Fechar chat" : "Abrir chat",
           },
         }}
       >
-        <Symbol fill={voice.chatOpen()}>chat</Symbol>
+        <IconAnim kind="pop">
+          <Symbol fill={voice.chatOpen()}>chat</Symbol>
+        </IconAnim>
       </IconButton>
     </ChatToggleHolder>
   );
@@ -85,12 +86,14 @@ function LayoutButtons() {
         variant={"standard"}
         onPress={() => voice.toggleLayout("fullscreen")}
       >
-        <Show
-          when={voice.layout() === "fullscreen"}
-          fallback={<Symbol>fullscreen</Symbol>}
-        >
-          <Symbol>fullscreen_exit</Symbol>
-        </Show>
+        <IconAnim kind="pop">
+          <Show
+            when={voice.layout() === "fullscreen"}
+            fallback={<Symbol>fullscreen</Symbol>}
+          >
+            <Symbol>fullscreen_exit</Symbol>
+          </Show>
+        </IconAnim>
       </IconButton>
     </>
   );

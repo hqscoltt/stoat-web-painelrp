@@ -151,7 +151,7 @@ export function ParticipantTile(props: TileProps) {
               <Avatar
                 src={user().avatar}
                 fallback={user().username}
-                size={32}
+                size={20}
                 interactive={false}
               />
             </AvatarOnly>
@@ -297,8 +297,8 @@ const AvatarOnly = styled("div", {
     // TODO: Refactor the avatar component to be reactive later.
     "& > *": {
       width: "auto !important",
-      height: "20% !important",
-      minHeight: "32px",
+      height: "12% !important",
+      minHeight: "20px",
     },
   },
 });

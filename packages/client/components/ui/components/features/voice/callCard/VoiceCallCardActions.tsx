@@ -7,7 +7,7 @@ import { styled } from "styled-system/jsx";
 import { useInstance } from "@revolt/instance";
 import { useVoice } from "@revolt/rtc";
 import { useState } from "@revolt/state";
-import { Button, IconButton } from "@revolt/ui/components/design";
+import { Button, IconAnim, IconButton } from "@revolt/ui/components/design";
 import { Symbol } from "@revolt/ui/components/utils/Symbol";
 
 export function VoiceCallCardActions(props: { size: "xs" | "sm" }) {
@@ -68,9 +68,11 @@ export function VoiceCallCardActions(props: { size: "xs" | "sm" }) {
         }}
         isDisabled={!voice.speakingPermission}
       >
-        <Show when={voice.microphone()} fallback={<Symbol>mic_off</Symbol>}>
-          <Symbol>mic</Symbol>
-        </Show>
+        <IconAnim kind="wiggle">
+          <Show when={voice.microphone()} fallback={<Symbol>mic_off</Symbol>}>
+            <Symbol>mic</Symbol>
+          </Show>
+        </IconAnim>
       </IconButton>
       <IconButton
         size={props.size}
@@ -88,12 +90,14 @@ export function VoiceCallCardActions(props: { size: "xs" | "sm" }) {
         }}
         isDisabled={!voice.listenPermission}
       >
-        <Show
-          when={voice.deafen() || !voice.listenPermission}
-          fallback={<Symbol>headset</Symbol>}
-        >
-          <Symbol>headset_off</Symbol>
-        </Show>
+        <IconAnim kind="pop">
+          <Show
+            when={voice.deafen() || !voice.listenPermission}
+            fallback={<Symbol>headset</Symbol>}
+          >
+            <Symbol>headset_off</Symbol>
+          </Show>
+        </IconAnim>
       </IconButton>
       <IconButton
         size={props.size}
@@ -113,7 +117,9 @@ export function VoiceCallCardActions(props: { size: "xs" | "sm" }) {
         }}
         isDisabled={!limits().video}
       >
-        <Symbol>camera_video</Symbol>
+        <IconAnim kind="pop">
+          <Symbol>camera_video</Symbol>
+        </IconAnim>
       </IconButton>
       <IconButton
         size={props.size}
@@ -133,12 +139,14 @@ export function VoiceCallCardActions(props: { size: "xs" | "sm" }) {
         }}
         isDisabled={!limits().video}
       >
-        <Show
-          when={!limits().video || voice.screenshare()}
-          fallback={<Symbol>stop_screen_share</Symbol>}
-        >
-          <Symbol>screen_share</Symbol>
-        </Show>
+        <IconAnim kind="pop">
+          <Show
+            when={!limits().video || voice.screenshare()}
+            fallback={<Symbol>stop_screen_share</Symbol>}
+          >
+            <Symbol>screen_share</Symbol>
+          </Show>
+        </IconAnim>
       </IconButton>
       <Button
         size={props.size}
@@ -151,7 +159,9 @@ export function VoiceCallCardActions(props: { size: "xs" | "sm" }) {
           },
         }}
       >
-        <Symbol>call_end</Symbol>
+        <IconAnim kind="jump">
+          <Symbol>call_end</Symbol>
+        </IconAnim>
       </Button>
     </Actions>
   );
