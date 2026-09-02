@@ -709,12 +709,19 @@ class Voice {
     }
   }
 
+  /**
+   * Resets to the default layout for the current state: the full call
+   * window ("expanded") while connected — NOT `undefined`, which falls
+   * back to the small floating-marker rect and makes the card shrink to
+   * the top instead of staying full-size. `undefined` only makes sense
+   * pre-connection, for the join-preview screen.
+   */
   resetLayout() {
-    this.#setLayout();
+    this.#setLayout(this.channel() ? "expanded" : undefined);
   }
 
   toggleLayout(type: VoiceLayout) {
-    this.#setLayout((l) => (l === type ? undefined : type));
+    this.#setLayout((l) => (l === type ? (this.channel() ? "expanded" : undefined) : type));
   }
 
   trackId(t: TrackReferenceOrPlaceholder) {
